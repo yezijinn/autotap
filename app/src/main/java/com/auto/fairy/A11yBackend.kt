@@ -10,10 +10,8 @@ import android.os.Looper
 import android.os.SystemClock
 import android.util.Log
 import com.auto.fairy.core.inject.Caps
-import com.auto.fairy.core.inject.Caps.Companion.ACCESSIBILITY_SLICE_SPAN_MS
 import com.auto.fairy.core.inject.Health
 import com.auto.fairy.core.inject.InputBackend
-import com.auto.fairy.core.inject.LatencyClass
 import com.auto.fairy.core.model.ScreenInfo
 import com.auto.fairy.core.runtime.Slice
 import java.util.concurrent.atomic.AtomicBoolean
@@ -87,11 +85,7 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
 
     private val main = Handler(Looper.getMainLooper())
 
-    override val caps: Caps = Caps(
-        maxSliceMs = ACCESSIBILITY_SLICE_SPAN_MS,
-        // HIGH：采样/派发开销由系统管线承担（区别于 root 通道的 LOW）
-        latencyClass = LatencyClass.HIGH,
-    )
+    override val caps: Caps = Caps.ACCESSIBILITY
 
     @Volatile
     private var closed = false

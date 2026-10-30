@@ -79,10 +79,7 @@ object OverlayController {
             refresh()
         }
 
-        override fun onProgress(cycle: Long) {
-            // 刷新读的只有 state / health / 缓存名字，没有一个随巡数变：
-            // 每巡一次空刷新只是白分配 Drawable 与 invalidate
-        }
+        // onProgress 不重写：刷新读的只有 state / health / 缓存名字，没有一个随巡数变
 
         override fun onError(message: String) {
             // 悬浮窗是主要操作面，出错必须有文字提示，不能只把图标变色
@@ -109,10 +106,7 @@ object OverlayController {
         // 实测撤权限后点激活只 refresh() 了一条不存在的窗口，界面照样提示「已激活」。
         // 所以先判权限，并顺手清掉残留状态，再给出原因。
         if (!Settings.canDrawOverlays(app)) {
-            // 操作面要消失了：回放不能接着跑（否则留下看不见、也停不了的点击器），
-            // 坐标层一并收起；权限回来后由 restore 按用户开关重新挂出，不动开关
-            PlaybackController.stop()
-            CoordinateMarkersController.hide()
+            // hide() 里已停回放并收坐标层，这里只补一句原因提示
             hide()
             showToast(app, R.string.toast_permission_overlay)
             return false
@@ -219,9 +213,11 @@ object OverlayController {
 
         PlaybackController.addListener(playbackListener)
         AutoFairyApp.of(app).repository.addListener(repositoryListener)
-        view.root.post { clampToScreen() }
-        // 条的位置/尺寸要等布局完成才准确，之后让坐标层重摆触摸窗
-        view.root.post { CoordinateMarkersController.onObstaclesChanged() }
+        view.root.post {
+            clampToScreen()
+            // 条的位置/尺寸要等布局完成才准确，之后让坐标层重摆触摸窗
+            CoordinateMarkersController.onObstaclesChanged()
+        }
         // 尺寸/旋转变化后要重新夹住：物理像素坐标 + WRAP_CONTENT，转屏后原坐标
         // 可能整条落在屏外（看不见也点不到，■ 与 ✕ 一起消失）。
         app.registerComponentCallbacks(configCallbacks)
@@ -232,14 +228,16 @@ object OverlayController {
     fun hide() {
         val view = binding
         val wasAdded = added
-        // removeView 会同步走一遍 detach，那里又会调回 hide()。detach 依赖 binding.root
-        // 认窗，所以必须**先 removeView、再清 binding**：先清的话守卫恒真、stop 永不执行
-        // （窗没了而回放照跑，实测 20/20 笔全打出去）。
         added = false
         OverlayQuickAdd.close()
         PlaybackController.removeListener(playbackListener)
         appContext?.let { AutoFairyApp.of(it).repository.removeListener(repositoryListener) }
         appContext?.unregisterComponentCallbacks(configCallbacks)
+        // 操作面消失 = 本次操作结束，必须自己停：detach 由 MSG_DIE 延后投递
+        // （实测 removeView 返回后 30ms 才到），那时 binding 已清空、守卫恒假，
+        // 靠它停回放会让「条没了、手机还在自己点」。坐标层要一并收，否则红点留在屏上。
+        PlaybackController.stop()
+        CoordinateMarkersController.hide()
         if (view != null && wasAdded) {
             runCatching { windowManager?.removeView(view.root) }
         }
@@ -434,20 +432,15 @@ object OverlayController {
         }
     }
 
-    /** 迷你条窗口的几何量：密度、宽（未布局时用估算值）、边距。三者同源，避免两处各算一遍。 */
-    private fun viewMetrics(view: View): Triple<Float, Float, Int> {
-        val density = view.resources.displayMetrics.density
-        val width = if (view.width > 0) view.width.toFloat() else 200f * density
-        return Triple(density, width, (SCREEN_MARGIN_DP * density).toInt())
-    }
-
     private fun clampToScreen() {
         val view = binding?.root ?: return
         val layout = params ?: return
         val screen = ScreenMetrics.size(view.context)
         // 全部用物理像素：LayoutParams.x/y、rawX、ScreenMetrics 同一个坐标系，
         // 掺进 dp 会让 maxX 偏大，窗口右边被挤到屏幕外（关闭键就点不到了）
-        val (density, width, margin) = viewMetrics(view)
+        val density = view.resources.displayMetrics.density
+        val margin = (SCREEN_MARGIN_DP * density).toInt()
+        val width = if (view.width > 0) view.width.toFloat() else 200f * density
         val height = if (view.height > 0) view.height.toFloat() else 48f * density
         val maxX = (screen.x - width - margin).coerceAtLeast(margin.toFloat())
         val maxY = (screen.y - height - margin).coerceAtLeast(margin.toFloat())
@@ -465,7 +458,9 @@ object OverlayController {
             return
         }
         val screen = ScreenMetrics.size(view.context)
-        val (_, width, margin) = viewMetrics(view)
+        val density = view.resources.displayMetrics.density
+        val margin = (SCREEN_MARGIN_DP * density).toInt()
+        val width = if (view.width > 0) view.width.toFloat() else 200f * density
         layout.x = if (layout.x + width / 2 < screen.x / 2f) {
             margin
         } else {

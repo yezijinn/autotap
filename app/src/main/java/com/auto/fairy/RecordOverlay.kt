@@ -85,9 +85,8 @@ object RecordOverlay {
             SimpleDateFormat("MM-dd HH:mm", Locale.getDefault()).format(Date()),
         )
         draftScreen = ScreenMetrics.screenInfo(app)
-        // 录制期间必须独占触摸：先停回放、收起悬浮窗控制面板、关掉脚本列表浮层，
+        // 录制期间必须独占触摸：收起悬浮窗（内含停回放与收坐标层）、关掉脚本列表浮层，
         // 避免多个浮层抢事件（M5 §3.3）；全局标记层同样让位（M6 §4.3）
-        PlaybackController.stop()
         OverlayScriptList.close()
         OverlayController.hide()
         // 录制全屏吃触摸，坐标标记层让位（退出时按用户开关恢复）

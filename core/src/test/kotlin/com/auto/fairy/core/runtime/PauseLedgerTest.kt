@@ -12,11 +12,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * 暂停账本必须从**请求时刻**起算。
+ * 暂停账本必须从**请求时刻**起算，且不许丢段。
  *
  * 暂停命令要等 `execute` 返回才被消费，而长手势收片最长还要跑 600ms 宽限。
  * 若从「命令被消费的时刻」起记，这段就被算成正常播放，时间轴永久少一段
  * （实测 3s 长按暂停少 601ms，后续步骤全部提前）。
+ *
+ * 反过来也有一个洞：暂停与恢复落在同一次 `drain()` 里会互相抵消，
+ * `waitWhilePaused` 从未进入，那段时长既没冻结也没记账——等于用户点了暂停却没生效。
  */
 class PauseLedgerTest {
 
@@ -76,6 +79,48 @@ class PauseLedgerTest {
             engine.stop()
             engine.awaitIdle(2_000L)
             exited.countDown()
+        }
+    }
+
+    /** 每片停在 [gate] 上，直到放行为止：用来把命令挤进同一次 drain。 */
+    private class GatedBackend : InputBackend {
+
+        override val caps: Caps = Caps()
+
+        private val gate = java.util.concurrent.CountDownLatch(1)
+
+        override suspend fun prepare(): Result<Unit> = Result.success(Unit)
+
+        override suspend fun execute(slice: Slice): Result<Unit> {
+            gate.await()
+            return Result.success(Unit)
+        }
+
+        override fun health(): Health = Health.ALIVE
+
+        fun open() = gate.countDown()
+    }
+
+    @Test
+    fun `暂停与恢复落在同一次 drain 也要记账`() {
+        val backend = GatedBackend()
+        val engine = PlaybackEngine(backend)
+        val timeline = compile(listOf(Step.Tap(listOf(Point(0.5f, 0.5f)), durationMs = 50L)))
+        try {
+            assertTrue(engine.start(timeline, loopTimes = 1))
+            Thread.sleep(50L)
+            // 两条命令都排在队列里，引擎此刻卡在 execute 里，只能一次 drain 全部取走
+            assertTrue(engine.pause())
+            Thread.sleep(150L)
+            assertTrue(engine.resume())
+            backend.open()
+            assertTrue(waitUntil(3_000L) { engine.playbackState == PlaybackEngine.State.IDLE })
+            val pausedMs = engine.pausedNanos() / 1_000_000L
+            assertTrue("pausedMs=$pausedMs 折叠掉的暂停也应记账", pausedMs >= 100L)
+        } finally {
+            backend.open()
+            engine.stop()
+            engine.awaitIdle(2_000L)
         }
     }
 }

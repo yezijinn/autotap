@@ -63,6 +63,9 @@ class PlaybackEngine(private val backend: InputBackend) {
     @Volatile
     private var pauseReqNs = 0L
 
+    /** 被同一次 drain 折叠掉的暂停时长（纳秒），下一轮循环顶部计入账本。 */
+    private var collapsedPauseNs = 0L
+
     @Volatile
     private var wakeRequested = false
 
@@ -133,6 +136,7 @@ class PlaybackEngine(private val backend: InputBackend) {
         stopRequested = false
         pauseRequested = false
         pauseReqNs = 0L
+        collapsedPauseNs = 0L
         wakeRequested = false
         commands.clear()
         val limit = if (loopTimes <= 0) 0 else loopTimes
@@ -236,6 +240,12 @@ class PlaybackEngine(private val backend: InputBackend) {
             while (true) {
                 if (runToken != token) return
                 drain()
+                if (collapsedPauseNs != 0L) {
+                    // 折叠掉的暂停：时间轴整体后移，与「暂停生效」同一条记账路径
+                    anchorNs += collapsedPauseNs
+                    pausedTotalNs += collapsedPauseNs
+                    collapsedPauseNs = 0L
+                }
                 if (stopRequested) return
                 if (pauseRequested) {
                     val pausedNs = waitWhilePaused(token)
@@ -340,7 +350,15 @@ class PlaybackEngine(private val backend: InputBackend) {
             when (commands.poll() ?: return) {
                 is Command.Start -> Unit // Start 不进队列（由 start() 直接处理）
                 Command.Pause -> pauseRequested = true
-                Command.Resume -> pauseRequested = false
+                Command.Resume -> {
+                    // 暂停与恢复落在同一次 drain 时会互相抵消：waitWhilePaused 从未进入，
+                    // 这段时长既没冻结也没记账，时间轴就当它没发生。这里补记进暂停账本。
+                    if (pauseRequested && state != State.PAUSED && pauseReqNs != 0L) {
+                        collapsedPauseNs += System.nanoTime() - pauseReqNs
+                    }
+                    pauseReqNs = 0L
+                    pauseRequested = false
+                }
                 Command.Stop -> stopRequested = true
             }
         }

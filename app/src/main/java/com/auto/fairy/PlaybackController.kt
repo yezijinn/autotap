@@ -113,13 +113,12 @@ object PlaybackController {
                 override fun onOpChanged(op: String?, packageName: String?) {
                     if (Settings.canDrawOverlays(appContext)) return
                     handler.post {
-                        stop()
+                        // hide() 内已停回放并收坐标层，这里只补脚本列表浮层
                         OverlayController.hide()
                         // 脚本列表同是满屏浮层：撤权限同样只被隐藏、不 detach，
                         // 留在屏上的是一个看不见却照吃触摸的全屏窗口（实测：权限恢复后
                         // 第一次点「脚本」被它吃掉，第二次才打开）。小窗的 hide 只收加号层。
                         OverlayScriptList.close()
-                        CoordinateMarkersController.hide()
                     }
                 }
             },
