@@ -113,10 +113,13 @@ class PauseLedgerTest {
             assertTrue(engine.pause())
             Thread.sleep(150L)
             assertTrue(engine.resume())
+            // 恢复命令还在队列里多躺 300ms：记账只认请求时刻，不许把排队余量算成暂停
+            Thread.sleep(300L)
             backend.open()
             assertTrue(waitUntil(3_000L) { engine.playbackState == PlaybackEngine.State.IDLE })
             val pausedMs = engine.pausedNanos() / 1_000_000L
             assertTrue("pausedMs=$pausedMs 折叠掉的暂停也应记账", pausedMs >= 100L)
+            assertTrue("pausedMs=$pausedMs 应只记请求的 150ms，不许加上命令排队余量", pausedMs < 250L)
         } finally {
             backend.open()
             engine.stop()

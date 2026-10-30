@@ -63,6 +63,10 @@ class PlaybackEngine(private val backend: InputBackend) {
     @Volatile
     private var pauseReqNs = 0L
 
+    /** 恢复请求时刻；与 [pauseReqNs] 配对，折叠记账两端都取请求时刻。 */
+    @Volatile
+    private var resumeReqNs = 0L
+
     /** 被同一次 drain 折叠掉的暂停时长（纳秒），下一轮循环顶部计入账本。 */
     private var collapsedPauseNs = 0L
 
@@ -136,6 +140,7 @@ class PlaybackEngine(private val backend: InputBackend) {
         stopRequested = false
         pauseRequested = false
         pauseReqNs = 0L
+        resumeReqNs = 0L
         collapsedPauseNs = 0L
         wakeRequested = false
         commands.clear()
@@ -172,6 +177,8 @@ class PlaybackEngine(private val backend: InputBackend) {
         // 冻结起点取请求时刻，不是命令被消费的时刻：本片还要跑完（长手势最长 600ms 宽限），
         // 这段按旧写法算成正常播放，时间轴会永久少一段（实测 3s 长按暂停少 601ms）。
         pauseReqNs = System.nanoTime()
+        // 新的暂停对开启：上一轮的恢复请求时刻作废，否则折叠记账会取到比暂停更早的值
+        resumeReqNs = 0L
         commands.add(Command.Pause)
         wake()
         return true
@@ -179,6 +186,9 @@ class PlaybackEngine(private val backend: InputBackend) {
 
     fun resume(): Boolean {
         if (!active.get()) return false
+        // 与 [pauseReqNs] 对称：折叠记账的终点也取请求时刻，不能等命令被消费时才取
+        // （实测 200ms 暂停被记成 602ms，时间轴多后移 400ms）。
+        resumeReqNs = System.nanoTime()
         commands.add(Command.Resume)
         wake()
         return true
@@ -342,7 +352,10 @@ class PlaybackEngine(private val backend: InputBackend) {
         }
         state = State.RUNNING
         pauseReqNs = 0L
-        return System.nanoTime() - pauseStartNs
+        // 终点同样取恢复的**请求时刻**：解析出这条命令到本行之间还有一次线程唤醒
+        val endNs = if (resumeReqNs != 0L) resumeReqNs else System.nanoTime()
+        resumeReqNs = 0L
+        return endNs - pauseStartNs
     }
 
     private fun drain() {
@@ -353,10 +366,13 @@ class PlaybackEngine(private val backend: InputBackend) {
                 Command.Resume -> {
                     // 暂停与恢复落在同一次 drain 时会互相抵消：waitWhilePaused 从未进入，
                     // 这段时长既没冻结也没记账，时间轴就当它没发生。这里补记进暂停账本。
+                    // 两端都取**请求时刻**：命令要到片尾才被消费，用消费时刻会把
+                    // 「恢复请求 → 片尾」这段余量算成暂停（实测请求 199ms 记成 602ms）。
                     if (pauseRequested && state != State.PAUSED && pauseReqNs != 0L) {
-                        collapsedPauseNs += System.nanoTime() - pauseReqNs
+                        collapsedPauseNs += (resumeReqNs - pauseReqNs).coerceAtLeast(0L)
+                        resumeReqNs = 0L
+                        pauseReqNs = 0L
                     }
-                    pauseReqNs = 0L
                     pauseRequested = false
                 }
                 Command.Stop -> stopRequested = true
