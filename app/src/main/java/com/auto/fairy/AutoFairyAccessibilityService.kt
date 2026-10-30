@@ -5,7 +5,6 @@ import android.content.Intent
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
-import android.widget.Toast
 import com.auto.fairy.overlay.CoordinateMarkersController
 
 /**
@@ -14,9 +13,9 @@ import com.auto.fairy.overlay.CoordinateMarkersController
  * v1.0 不做控件点击/读屏，onAccessibilityEvent 留空；服务唯一职责是把
  * [A11yBackend] 注册进 [PlaybackController]，并在存活期间让进程处于活跃状态。
  *
- * 另外承担音量键快捷触发：配置里声明了 flagRequestFilterKeyEvents，但按键是否被
- * 消费由 [onKeyEvent] 的返回值逐次决定——开关关闭或没有可播放脚本时返回 false，
- * 音量键照常交给系统，不会把系统音量锁死。
+ * 另外承担音量键停止：配置里声明了 flagRequestFilterKeyEvents，按键是否被接管由
+ * [onKeyEvent] 逐次决定——**只有脚本正在运行**时才消费并停止，其余情况一律返回 false，
+ * 音量键照常交给系统，不会把系统音量锁死，也不会在空闲时被本应用拦截。
  */
 class AutoFairyAccessibilityService : AccessibilityService() {
 
@@ -57,28 +56,25 @@ class AutoFairyAccessibilityService : AccessibilityService() {
     }
 
     /**
-     * 音量减 = 开始/暂停切换。
+     * 音量键 = **仅在本应用正在回放时** 的紧急停止，音量加、减效果相同。
      *
-     * 只处理首次按下（ACTION_DOWN 且无长按重复），其余情况一律返回 false 交还系统：
-     * 这样长按调音量、媒体音量场景不会被误吞。返回 true 表示本次事件已被消费。
+     * 运行之外一律返回 false：不消费、不弹提示、不改任何状态，音量键照常调节系统音量。
+     * 只处理首次按下（ACTION_DOWN 且无长按重复），长按调音量不会被误吞。
      */
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode != KeyEvent.KEYCODE_VOLUME_DOWN &&
+            event.keyCode != KeyEvent.KEYCODE_VOLUME_UP
+        ) {
+            return false
+        }
         // 模拟器等无物理音量键的环境里，adb 注入的按键事件源是 injected，
         // 系统 KeyboardInterceptor 不会转给无障碍服务，此时本方法根本不会被调用。
         // 真机排查靠下面这行日志确认回调是否到达。
         Log.i(TAG, "onKeyEvent key=${event.keyCode} action=${event.action}")
-        if (event.keyCode != KeyEvent.KEYCODE_VOLUME_DOWN) return false
         if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount > 0) return false
         if (!AppSettings.isVolumeKeyEnabled(this)) return false
-        // 目标与后端就绪度由 toggleFromVolumeKey 自己判（同一口径只有一处），
-        // 这里再查一次会让冷启动多扫一遍磁盘。
-        val consumed = PlaybackController.toggleFromVolumeKey()
-        // 提示只在真的消费掉这次按键后弹：没脚本时按音量键应当照旧调小音量
-        if (consumed && AppSettings.shouldShowVolumeKeyHint(this)) {
-            AppSettings.markVolumeKeyHintShown(this)
-            Toast.makeText(this, R.string.volume_key_hint, Toast.LENGTH_LONG).show()
-        }
-        return consumed
+        // 运行外的按键一律交还系统，判定只在 stopFromVolumeKey 一处
+        return PlaybackController.stopFromVolumeKey()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {

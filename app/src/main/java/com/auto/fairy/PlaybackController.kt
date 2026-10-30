@@ -482,29 +482,15 @@ object PlaybackController {
     }
 
     /**
-     * 音量键快捷触发：运行中→暂停，已暂停→继续，空闲→从头播放。
+     * 音量键快捷触发：**只在运行中**生效，一律执行停止。
      *
-     * 没有任何可播放脚本时返回 false，调用方（无障碍服务）应把按键交还系统，
-     * 避免音量键被无条件吞掉。
+     * 空闲 / 暂停 / 无脚本都返回 false，调用方把按键交还系统——这些状态下音量键
+     * 不该被本应用拦截，更不该顺手起播或恢复（旧实现的「开始/暂停切换」已废弃）。
      */
-    fun toggleFromVolumeKey(): Boolean {
-        return when (state) {
-            PlaybackEngine.State.RUNNING -> pause()
-            PlaybackEngine.State.PAUSED -> resume()
-            PlaybackEngine.State.IDLE -> {
-                // 目标解析不出来（无后端 / 无脚本）就不消费：音量键交还系统
-                if (!isBackendReady() || resolvedTargetId() == null) return false
-                // 已经判过「有可播脚本」：起播失败的原因由 play/playCurrent 自己报。
-                // 一次按键不能既弹「屏幕不一致」又把系统音量调小。
-                // 音量键起播也要挂迷你条（否则现场只剩 MainActivity、暂停/停止无处可点，
-                // 注入闸门又会吞掉全部注入触摸，整次回放只能重装包才能救回）。
-                // show 失败（无悬浮窗权限 / addView 抛异常）时放弃起播、把键交还系统：
-                // 否则屏上看不到任何迷你条却已在跑，正是 P2 想堵的「无操作面起播」。
-                if (!OverlayController.show(appContext)) return false
-                playCurrent()
-                true
-            }
-        }
+    fun stopFromVolumeKey(): Boolean {
+        if (state != PlaybackEngine.State.RUNNING) return false
+        stop()
+        return true
     }
 
     // ── 内部装配 ────────────────────────────────────────────

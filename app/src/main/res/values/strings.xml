@@ -148,9 +148,9 @@
     <string name="keepalive_background_on">未受限制</string>
     <string name="keepalive_background_off">已受限制，后台可能被切断</string>
     <string name="keepalive_unknown">无法读取</string>
-    <string name="keepalive_volume_switch">音量减键开始/暂停</string>
-    <string name="keepalive_volume_hint">开启后音量减键会被拦截：可播放时用于开始/暂停，其余情况仍交给系统调音量</string>
-    <string name="volume_key_hint">音量键将用于开始/暂停</string>
+    <string name="keepalive_volume_switch">音量键停止脚本</string>
+    <string name="keepalive_volume_hint">仅在脚本运行中拦截音量键：按音量加或减立即停止；其余情况照常调节系统音量</string>
+    <string name="volume_key_hint">脚本运行中按音量键即停止</string>
     <string name="keepalive_rom_xiaomi">小米 / Redmi</string>
     <string name="keepalive_rom_huawei">华为 / 荣耀</string>
     <string name="keepalive_rom_oppo">OPPO / 一加 / realme</string>
@@ -271,8 +271,8 @@
     <string name="toast_script_broken">脚本文件已损坏，只能删除后重建</string>
     <string name="toast_add_step_unavailable">当前脚本不可用，请在列表选择或新建</string>
     <string name="toast_script_activated">已激活，点小窗开始运行</string>
-    <string name="settings_volume_key">音量键快捷开始暂停</string>
-    <string name="settings_volume_key_hint">播放中按音量减键开始或暂停</string>
+    <string name="settings_volume_key">音量键停止脚本</string>
+    <string name="settings_volume_key_hint">仅在脚本运行中生效，按音量加或减立即停止</string>
     <string name="settings_snap_edge">悬浮窗贴边</string>
     <string name="settings_snap_edge_hint">拖动松手后自动贴到屏幕边缘</string>
     <string name="settings_coord_layer">显示坐标标记</string>
