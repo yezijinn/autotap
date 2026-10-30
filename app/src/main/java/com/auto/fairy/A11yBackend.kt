@@ -8,6 +8,7 @@ import android.graphics.Point
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.util.Log
 import com.auto.fairy.core.inject.Caps
 import com.auto.fairy.core.inject.Caps.Companion.ACCESSIBILITY_SLICE_SPAN_MS
 import com.auto.fairy.core.inject.Health
@@ -54,9 +55,10 @@ import kotlin.coroutines.suspendCoroutine
  * - 提前结束：[requestAbort] 由控制器在暂停/停止时调用，给正常回调一个宽限期后
  *   主动结束本片，保证即使回调全丢，暂停/停止也能在宽限内生效。停止
  *   （`dropPending = true`）会把本片还没派发的笔画**当场作废**；暂停只收片、不丢笔画
- *   （时间轴是冻结而非跳过，丢了这一笔等于用户脚本少点一下）。**已在屏上的手势不归它管**：
- *   那是用户那一下触摸结束的——任何新触摸都会取消在途注入手势（实测 3s 滑动恰在触摸
- *   那一毫秒收到 CANCEL；用音量键暂停则整段仍跑满 3000ms，证明本方法不碰在途手势）。
+ *   （时间轴是冻结而非跳过，丢了这一笔等于用户脚本少点一下）。停止还会**当场作废在途手势**
+ *   （见 [cancelInFlightGesture]）：派发一个零笔画手势，系统按「新派发取消旧手势」处理，
+ *   屏幕立刻停住且不额外注入任何事件——否则 12s 的滑动在按下停止后还会继续滑满。
+ *   暂停不碰在途手势（冻结时间轴，这一笔仍要完整走完）。
  *   真实触摸无论落在哪个窗口（含自家迷你条，第十七轮两次实测）目标都会收到 CANCEL；
  *   `adb shell input` 注入的点击只有落在目标窗口内才截断那一笔，落在自家浮层时目标停在
  *   按下态、收不到 CANCEL（不会残留到下一次播放：实测重放的首个 DOWN 起落与时长精确）。
@@ -73,10 +75,9 @@ import kotlin.coroutines.suspendCoroutine
  * 现在的处理是「这一笔丢了就丢了，接着派下一笔」：时间轴是绝对的，后续笔画本来就不受
  * 影响；目标已收到 ACTION_CANCEL，不会留下按下态。
  *
- * 第九、十轮都评估过「把长笔画切成 ≤400ms 续段，让停止落在段边界」：**不采纳**。
- * 它要新增分段状态机（明显增实体），收益只是让「停止时长按的收尾」更干净；
- * 而补偿性补发一次 UP 等于在用户屏幕上额外注入触摸，风险大于收益。
- * 当前行为已在此写明，避免后续重复分析。
+ * 早先评估过「把长笔画切成 ≤400ms 续段，让停止落在段边界」：**不采纳**——要新增分段
+ * 状态机，收益只是让收尾更干净。现在改成停止时派发一次零笔画手势取消在途手势即可，
+ * 既不加状态机，也不往屏幕上补任何 UP。
  *
  * 说明：调度层不为相邻切片预留间隔（那会让「片内允许 0 间隔、片间强加 50ms」
  * 自相矛盾，实测 40 次 60ms 点击被拉成平均 67ms、每次片边界冒一个 90–106ms 的尖峰）。
@@ -210,14 +211,21 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
             val remainMs = (endNs - System.nanoTime()) / 1_000_000L
             main.postDelayed(watchdog, remainMs.coerceAtLeast(0L) + WATCHDOG_GRACE_MS)
             abortCurrent = {
-                // 宽限从「本片最后一笔派发完」起算：暂停不丢笔的前提是片内笔画都已发出
-                val waitMs = ((lastDispatchNs - System.nanoTime()) / 1_000_000L).coerceAtLeast(0L)
-                main.postDelayed({
-                    // 末批还没真正派出（主线程卡顿让真实派发晚于计划）：此刻收片会让
-                    // 后面的笔画被 resumed 挡掉——静默少点若干下。交给正常收尾：
-                    // 末批回调或看门狗兜底（那时本片笔画已全部发出）。
-                    if (tailDispatchNs != 0L) finish(Result.success(Unit))
-                }, waitMs + ABORT_GRACE_MS)
+                if (dropped) {
+                    // 停止：在途手势一并作废，立刻收片。宽限是给「回调丢失」的逃生门，
+                    // 停止不需要它——多等 600ms 就是屏幕上多滑 600ms。
+                    cancelInFlightGesture()
+                    finish(Result.success(Unit))
+                } else {
+                    // 宽限从「本片最后一笔派发完」起算：暂停不丢笔的前提是片内笔画都已发出
+                    val waitMs = ((lastDispatchNs - System.nanoTime()) / 1_000_000L).coerceAtLeast(0L)
+                    main.postDelayed({
+                        // 末批还没真正派出（主线程卡顿让真实派发晚于计划）：此刻收片会让
+                        // 后面的笔画被 resumed 挡掉——静默少点若干下。交给正常收尾：
+                        // 末批回调或看门狗兜底（那时本片笔画已全部发出）。
+                        if (tailDispatchNs != 0L) finish(Result.success(Unit))
+                    }, waitMs + ABORT_GRACE_MS)
+                }
             }
             main.post {
                 if (closed) {
@@ -249,6 +257,21 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
      * 但 dp 视口变了、控件整体重排，归一化坐标同样会点错——起播门的
      * [ScreenMetrics.mismatch] 一直比 dp，播放中这道门漏了它。
      */
+    /**
+     * 作废在途注入手势。
+     *
+     * 系统对 `dispatchGesture` 的语义是「新派发先取消在途手势」，这里派发一个**零笔画**
+     * 的手势：只触发取消，不给屏幕注入任何 DOWN/UP。补发一次触摸或 UP 可能点中目标
+     * 应用（等于替用户多点一下），代价远大于收益，所以只走取消、不补事件。
+     */
+    private fun cancelInFlightGesture() {
+        try {
+            service.dispatchGesture(GestureDescription.Builder().build(), null, null)
+        } catch (t: Throwable) {
+            Log.w(TAG, "取消在途手势失败", t)
+        }
+    }
+
     private fun screenAbort(now: ScreenInfo): Result<Unit>? {
         val start = screenAtStart ?: return null
         if (now.w == start.w && now.h == start.h &&
@@ -359,15 +382,19 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
                     service.dispatchGesture(
                         one,
                         object : AccessibilityService.GestureResultCallback() {
-                            override fun onCompleted(gestureDescription: GestureDescription?) = settle()
+                            override fun onCompleted(gestureDescription: GestureDescription?) = settle(true)
 
-                            override fun onCancelled(gestureDescription: GestureDescription?) = settle()
+                            override fun onCancelled(gestureDescription: GestureDescription?) = settle(false)
 
-                            private fun settle() {
+                            private fun settle(completed: Boolean) {
+                                val elapsed = spentMs + (System.nanoTime() - fromNs) / 1_000_000L
                                 if (stopped.get()) return
                                 if (abortGeneration != generation) return
-                                val elapsed = spentMs + (System.nanoTime() - fromNs) / 1_000_000L
-                                val tail = if (fullPath != null && resumeCount < MAX_RESUME &&
+                                // 停止已下达：这次提前结束是自家取消造成的，不能当作被系统截断去续接
+                                if (dropped) return
+                                // 只接「提前完成」的续接：onCancelled 是用户触摸或系统作废在途手势，
+                                // 此时续派等于把用户刚打断的滑动重新拉起来。
+                                val tail = if (completed && fullPath != null && resumeCount < MAX_RESUME &&
                                     elapsed + RESUME_TOLERANCE_MS < batchDurationMs
                                 ) {
                                     tailPath(fullPath, elapsed.toFloat() / batchDurationMs)
@@ -469,6 +496,8 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
     }
 
     companion object {
+        private const val TAG = "AutoFairyA11y"
+
         /**
          * 后端不可用的统一文案：delegate 为 null（服务没连上）与 [close] 后
          * （已断开）指的是同一件事，曾在前者写「未连接」、后者写「已断开」，
