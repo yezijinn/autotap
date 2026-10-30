@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 纯浅色：配色表只有一套浅色值，DayNight 只会在深色系统下把系统对话框染黑、
+         而正文/卡片仍是浅色 → 深底深字。锁定 Light 后外观与系统深色模式无关。 -->
+    <style name="Theme.AutoFairy" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryDark">@color/brand_primary_dark</item>
+        <item name="colorAccent">@color/brand_primary</item>
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+
+</resources>

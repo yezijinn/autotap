@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/window_background">
+
+    <!-- 顶部应用栏：标题 + 四个文字入口（自绘，无 Material） -->
+    <LinearLayout
+        android:id="@+id/appbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/appbar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_s"
+        android:background="@color/surface">
+
+        <TextView
+            android:id="@+id/text_appbar_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/nav_title_scripts"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <TextView
+            android:id="@+id/btn_overlay_entry"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/overlay_list_title"
+            android:text="@string/nav_title_scripts" />
+
+        <TextView
+            android:id="@+id/btn_diagnose"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/nav_title_diagnose"
+            android:text="@string/nav_title_diagnose" />
+
+        <TextView
+            android:id="@+id/btn_keepalive"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/nav_title_keepalive"
+            android:text="@string/nav_title_keepalive" />
+
+        <TextView
+            android:id="@+id/btn_settings"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/nav_title_settings"
+            android:text="@string/nav_title_settings" />
+    </LinearLayout>
+
+    <!-- 引导条 + 内容：竖向排列，横幅出现时把内容整体下推。 -->
+    <LinearLayout
+        android:id="@+id/content_column"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="@dimen/appbar_height"
+        android:orientation="vertical">
+
+        <!-- 权限引导条：无障碍 / 悬浮窗未开启时显示 -->
+        <LinearLayout
+            android:id="@+id/banner_permissions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_l"
+            android:layout_marginEnd="@dimen/space_l"
+            android:layout_marginTop="@dimen/space_s"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_guide"
+            android:paddingStart="@dimen/space_m"
+            android:paddingEnd="@dimen/space_m"
+            android:paddingTop="@dimen/space_s"
+            android:paddingBottom="@dimen/space_s"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/text_permission_hint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/btn_fix_permission"
+                style="@style/AppbarTextButton"
+                android:text="@string/permission_fix"
+                android:textColor="@color/brand_primary" />
+        </LinearLayout>
+
+        <!-- 内容容器：Fragment 在此切换（ScriptList / Placeholder） -->
+        <FrameLayout
+            android:id="@+id/container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!-- 悬浮新建按钮：中文文字药丸（单入口，不重复） -->
+    <TextView
+        android:id="@+id/fab_new_script"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/fab_size"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="@dimen/space_l"
+        android:layout_marginBottom="@dimen/space_l"
+        android:gravity="center"
+        android:contentDescription="@string/fab_new_script"
+        android:text="@string/fab_new_script"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        android:textColor="@color/overlay_text"
+        android:background="@drawable/bg_fab"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_l" />
+
+    <!-- 弹层菜单：用 Activity 内覆盖层代替 PopupWindow，避免焦点窗口抢占 -->
+    <FrameLayout
+        android:id="@+id/menu_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/menu_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:orientation="vertical"
+            android:minWidth="160dp"
+            android:background="@drawable/bg_card"
+            android:elevation="8dp"
+            android:padding="@dimen/space_s" />
+    </FrameLayout>
+
+</FrameLayout>

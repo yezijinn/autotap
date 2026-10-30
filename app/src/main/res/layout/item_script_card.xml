@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 脚本卡片：左侧 状态点+名称/循环/步数/修改时间，右侧 2×2 动作按钮（激活/编辑/导出/删除）。
+     按钮收在右上角，不占整行——用户明确要求「放在同一行右侧」。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_script"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/space_m"
+    android:background="@drawable/bg_card"
+    android:padding="@dimen/space_m">
+
+    <LinearLayout style="@style/RowHorizontal">
+
+        <!-- 左：状态点 + 名称/循环/步数/修改时间（占满剩余宽度） -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <!-- 状态色圆点（默认隐藏，播放/出错时显示） -->
+            <View
+                android:id="@+id/img_status"
+                android:layout_width="@dimen/status_dot"
+                android:layout_height="@dimen/status_dot"
+                android:layout_marginEnd="@dimen/space_m"
+                android:background="@drawable/bg_status_dot"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/text_script_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    tools:text="每日签到" />
+
+                <!-- 循环 / 步数 / 状态（一行） -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/text_script_loops"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        android:background="@drawable/bg_chip"
+                        android:paddingStart="@dimen/space_s"
+                        android:paddingEnd="@dimen/space_s"
+                        android:paddingTop="3dp"
+                        android:paddingBottom="3dp"
+                        tools:text="循环 3 次" />
+
+                    <TextView
+                        android:id="@+id/text_script_steps"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:textSize="12sp"
+                        android:textColor="@color/text_secondary"
+                        tools:text="4 步" />
+
+                    <TextView
+                        android:id="@+id/text_script_state"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="@dimen/space_s"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="播放中" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/text_script_modified"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="12sp"
+                    android:textColor="@color/text_secondary"
+                    tools:text="修改于 2026-10-19 12:00" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 右：2×2 动作按钮，固定宽度不挤压左侧文字 -->
+        <LinearLayout
+            android:layout_width="168dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_m"
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btn_card_activate"
+                    style="@style/CardActionButton"
+                    android:text="@string/menu_activate" />
+
+                <TextView
+                    android:id="@+id/btn_card_edit"
+                    style="@style/CardActionButton"
+                    android:layout_marginStart="@dimen/space_xs"
+                    android:text="@string/menu_edit" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/space_xs">
+
+                <TextView
+                    android:id="@+id/btn_card_export"
+                    style="@style/CardActionButton"
+                    android:text="@string/menu_export" />
+
+                <TextView
+                    android:id="@+id/btn_card_delete"
+                    style="@style/CardActionButton"
+                    android:layout_marginStart="@dimen/space_xs"
+                    android:text="@string/menu_delete"
+                    android:textColor="@color/status_error" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>

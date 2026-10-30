@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- 诊断/保活页的排版令牌，保持与脚本卡片同一套字号与配色 -->
+    <style name="TextSectionTitle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">@dimen/space_s</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <style name="TextLabel">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <style name="TextValue">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">2dp</item>
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="CardStyle">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginBottom">@dimen/space_m</item>
+        <item name="android:orientation">vertical</item>
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:padding">@dimen/space_l</item>
+    </style>
+
+    <!-- 顶部栏文字入口：44dp 高靶面、13sp、浅蓝底（5 处同形，含权限条「去开启」） -->
+    <style name="AppbarTextButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">@dimen/touch_target</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:background">@drawable/bg_appbar_text_btn</item>
+        <item name="android:paddingStart">@dimen/space_m</item>
+        <item name="android:paddingEnd">@dimen/space_m</item>
+    </style>
+
+    <style name="TextActionButton">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/brand_primary</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:paddingStart">@dimen/space_m</item>
+        <item name="android:paddingEnd">@dimen/space_m</item>
+        <item name="android:paddingTop">@dimen/space_s</item>
+        <item name="android:paddingBottom">@dimen/space_s</item>
+    </style>
+
+    <!-- 颜色色板单块：26dp 方形，选中时代码加粗描边。底色统一给出，色值由引用点 backgroundTint 决定 -->
+    <style name="ColorSwatch">
+        <item name="android:layout_width">26dp</item>
+        <item name="android:layout_height">26dp</item>
+        <item name="android:layout_marginEnd">5dp</item>
+        <item name="android:background">@drawable/bg_color_swatch</item>
+    </style>
+
+    <!-- 卡片 2×2 动作按钮：等分一行、紧凑高度 -->
+    <style name="CardActionButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">32dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:background">@drawable/bg_appbar_text_btn</item>
+    </style>
+
+    <!-- ============ M4 编辑器 ============ -->
+
+    <!-- 底部弹出的添加步骤面板：铺满窗口、无标题、透明底 -->
+    <style name="EditorSheetDialog" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <!-- 非 floating 模式下必须显式给满宽窗口，否则 Dialog 窗口只包住内容，
+             scrim 点不到、item 命中率随内容高度漂移（720×1280 实测偶发） -->
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+    </style>
+
+    <!-- 添加步骤面板里的类型行：整行可点，中文文字 -->
+    <style name="EditorAddRow">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">@dimen/touch_target</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:paddingStart">@dimen/space_s</item>
+        <item name="android:paddingEnd">@dimen/space_s</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:background">@drawable/bg_chip</item>
+    </style>
+
+    <style name="EditorFieldLabel" parent="Widget.AppCompat.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginTop">@dimen/space_m</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <style name="EditorFieldHint" parent="Widget.AppCompat.TextView">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/text_secondary</item>
+    </style>
+
+    <!-- 数字输入框：7 处同形，宽度与对齐由引用点覆盖。
+         刻意不写 parent——挂 Widget.AppCompat.EditText 会带进 minHeight 与
+         默认背景，改变实际渲染高度。 -->
+    <style name="NumberField">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:inputType">number</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:paddingStart">@dimen/space_s</item>
+        <item name="android:paddingEnd">@dimen/space_s</item>
+        <item name="android:paddingTop">@dimen/space_s</item>
+        <item name="android:paddingBottom">@dimen/space_s</item>
+        <item name="android:importantForAutofill">no</item>
+    </style>
+
+    <!-- 设置页小数输入：14sp，允许小数点 -->
+    <style name="NumberFieldDecimal" parent="NumberField">
+        <item name="android:inputType">number|numberDecimal</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="EditorLoopAddBtn" parent="Widget.AppCompat.TextView">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:layout_marginEnd">@dimen/space_xs</item>
+        <item name="android:textSize">13sp</item>
+        <item name="android:textColor">@color/brand_primary</item>
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:paddingTop">@dimen/space_s</item>
+        <item name="android:paddingBottom">@dimen/space_s</item>
+    </style>
+    <!-- ============ 通用行/卡令牌 ============ -->
+
+    <!-- 状态/说明行：12sp 次要色 + 2dp 上距 -->
+    <style name="RowHint" parent="EditorFieldHint">
+        <item name="android:layout_marginTop">2dp</item>
+    </style>
+
+    <!-- 横向行容器：占满宽度、子项垂直居中 -->
+    <style name="RowHorizontal">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:orientation">horizontal</item>
+        <item name="android:gravity">center_vertical</item>
+    </style>
+
+    <!-- 卡内分隔线 -->
+    <style name="RowDivider">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
+        <item name="android:layout_marginTop">@dimen/space_m</item>
+        <item name="android:layout_marginBottom">@dimen/space_m</item>
+        <item name="android:background">@color/divider</item>
+    </style>
+
+    <!-- 卡片标题：15sp 加粗主色 -->
+    <style name="CardTitle">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+    </style>
+
+    <!-- 浮层底部操作按钮：等分一行，上下 12dp 内边距 -->
+    <style name="OverlayBarButton">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:textColor">@color/overlay_text</item>
+        <item name="android:paddingTop">@dimen/space_m</item>
+        <item name="android:paddingBottom">@dimen/space_m</item>
+    </style>
+
+    <!-- ============ M5 浮层 ============ -->
+
+    <!-- 诊断 / 保活 / 设置：透明底全屏承载，卡片尺寸由代码设为 90%×70% -->
+    <style name="Theme.AutoFairy.SheetDialog" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryDark">@color/brand_primary_dark</item>
+        <item name="colorAccent">@color/brand_primary</item>
+        <item name="android:windowIsFloating">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <!-- 自带遮罩已画在布局里，关掉系统调暗避免叠加过黑 -->
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
+    <!-- 脚本编辑器：Dialog 主题浮层，宽 90% 高 70% 由窗口参数设置 -->
+    <style name="Theme.AutoFairy.EditorDialog" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorPrimary">@color/brand_primary</item>
+        <item name="colorPrimaryDark">@color/brand_primary_dark</item>
+        <item name="colorAccent">@color/brand_primary</item>
+        <item name="android:windowIsFloating">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <!-- floating 窗口默认带最小宽，这里放开，实际尺寸由 setLayout 决定 -->
+        <item name="android:windowMinWidthMajor">90%</item>
+        <item name="android:windowMinWidthMinor">90%</item>
+    </style>
+
+</resources>

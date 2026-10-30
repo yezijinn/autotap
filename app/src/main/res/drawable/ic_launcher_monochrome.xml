@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 主题图标（Android 13+ 单色图标）：同一字形，笔画略加粗，
+     系统会自动上色，这里填白色只作占位 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M46.4,32A7.6,7.6 0 0 1 61.6,32V47H46.4Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M59,27.4H71A4.6,4.6 0 0 1 75.6,32A4.6,4.6 0 0 1 71,36.6H59Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M35,39.4H73A9.6,9.6 0 0 1 82.6,49V59A9.6,9.6 0 0 1 73,68.6H35A9.6,9.6 0 0 1 25.4,59V49A9.6,9.6 0 0 1 35,39.4ZM40,49.4H68A4.6,4.6 0 0 1 72.6,54V56A4.6,4.6 0 0 1 68,60.6H40A4.6,4.6 0 0 1 35.4,56V54A4.6,4.6 0 0 1 40,49.4Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,55m-4.1,0a4.1,4.1 0 1 0,8.2 0a4.1,4.1 0 1 0,-8.2 0" />
+    <path
+        android:pathData="M43,79.5L45.6,73.6"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,80.5L54,73.5"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M65,79.5L62.4,73.6"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+</vector>

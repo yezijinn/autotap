@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 小悬浮窗的「添加步骤」选择层：全屏遮罩 + 屏幕中心小卡片。
+     遮罩吃掉窗口外点击 = 关闭；卡片自身吃掉点击，避免被当成外部点击。 -->
+<com.auto.fairy.InjectShieldLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/quick_add_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <View
+        android:id="@+id/quick_add_scrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/record_scrim" />
+
+    <LinearLayout
+        android:id="@+id/quick_add_card"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/bg_dialog_card"
+        android:padding="@dimen/space_l">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/overlay_add_step"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:text="@string/overlay_add_step_hint"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+
+        <TextView
+            android:id="@+id/btn_quick_add_tap"
+            style="@style/EditorAddRow"
+            android:layout_width="match_parent"
+            android:layout_marginTop="@dimen/space_m"
+            android:text="@string/step_tap" />
+
+        <TextView
+            android:id="@+id/btn_quick_add_swipe"
+            style="@style/EditorAddRow"
+            android:layout_width="match_parent"
+            android:layout_marginTop="@dimen/space_s"
+            android:text="@string/step_swipe" />
+
+        <TextView
+            android:id="@+id/btn_quick_add_cancel"
+            style="@style/EditorFieldHint"
+            android:layout_width="match_parent"
+            android:layout_marginTop="@dimen/space_m"
+            android:gravity="center"
+            android:paddingTop="@dimen/space_s"
+            android:paddingBottom="@dimen/space_s"
+            android:text="@string/dialog_cancel" />
+    </LinearLayout>
+</com.auto.fairy.InjectShieldLayout>

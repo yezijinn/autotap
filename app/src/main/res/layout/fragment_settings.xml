@@ -1,0 +1,309 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="@dimen/space_l">
+
+    <!-- 音量键快捷开关 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_card"
+        android:padding="@dimen/space_l">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/CardTitle"
+                android:text="@string/settings_volume_key" />
+
+            <TextView
+                style="@style/RowHint"
+                android:text="@string/settings_volume_key_hint" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switch_volume_key"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 边缘吸附开关 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/space_m"
+        android:background="@drawable/bg_card"
+        android:padding="@dimen/space_l">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/CardTitle"
+                android:text="@string/settings_snap_edge" />
+
+            <TextView
+                style="@style/RowHint"
+                android:text="@string/settings_snap_edge_hint" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switch_snap_edge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 坐标标记层开关（系统全局） -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/space_m"
+        android:background="@drawable/bg_card"
+        android:padding="@dimen/space_l">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/CardTitle"
+                android:text="@string/settings_coord_layer" />
+
+            <TextView
+                style="@style/RowHint"
+                android:text="@string/settings_coord_layer_hint" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switch_coord_layer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 坐标可拖开关 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/space_m"
+        android:background="@drawable/bg_card"
+        android:padding="@dimen/space_l">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/CardTitle"
+                android:text="@string/settings_coord_move" />
+
+            <TextView
+                style="@style/RowHint"
+                android:text="@string/settings_coord_move_hint" />
+        </LinearLayout>
+
+        <Switch
+            android:id="@+id/switch_coord_move"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <!-- 步骤序号字体：预览 + 四个参数 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="@dimen/space_m"
+        android:background="@drawable/bg_card"
+        android:padding="@dimen/space_l">
+
+        <TextView
+            style="@style/CardTitle"
+            android:text="@string/settings_ordinal_title" />
+
+        <TextView
+            style="@style/RowHint"
+            android:text="@string/settings_ordinal_hint" />
+
+        <!-- 即时预览：改参数马上看到效果 -->
+        <com.auto.fairy.overlay.OrdinalStylePreview
+            android:id="@+id/preview_ordinal"
+            android:layout_width="match_parent"
+            android:layout_height="64dp"
+            android:layout_marginTop="@dimen/space_m"
+            android:background="@drawable/bg_chip" />
+
+        <!-- 颜色 -->
+        <!-- 字体颜色：九种标准色直接选，不用手填色值 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_m"
+            android:text="@string/settings_ordinal_color"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary" />
+
+        <LinearLayout
+            android:id="@+id/row_ordinal_color"
+            style="@style/RowHorizontal"
+            android:layout_marginTop="@dimen/space_s">
+
+            <View
+                android:id="@+id/swatch_ordinal_color_0"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_red" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_1"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_orange" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_2"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_yellow" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_3"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_green" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_4"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_cyan" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_5"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_blue" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_6"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_purple" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_7"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_white" />
+
+            <View
+                android:id="@+id/swatch_ordinal_color_8"
+                style="@style/ColorSwatch"
+                android:backgroundTint="@color/swatch_black" />
+        </LinearLayout>
+
+        <!-- 字号 -->
+        <LinearLayout
+            style="@style/RowHorizontal"
+            android:layout_marginTop="@dimen/space_s">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/settings_ordinal_size"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+
+            <EditText
+                android:id="@+id/edit_ordinal_size"
+                style="@style/NumberFieldDecimal"
+                android:layout_width="140dp"
+                android:gravity="center" />
+        </LinearLayout>
+
+
+        <!-- 数字与坐标的左右间距 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_m"
+            android:text="@string/settings_ordinal_gap"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary" />
+
+        <LinearLayout
+            style="@style/RowHorizontal"
+            android:layout_marginTop="@dimen/space_s">
+
+            <SeekBar
+                android:id="@+id/seek_ordinal_gap"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:max="20" />
+
+            <TextView
+                android:id="@+id/text_ordinal_gap_value"
+                android:layout_width="48dp"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textSize="14sp"
+                android:textColor="@color/text_primary" />
+        </LinearLayout>
+
+        <!-- 复位默认 -->
+        <TextView
+            android:id="@+id/btn_ordinal_reset"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/touch_target"
+            android:layout_marginTop="@dimen/space_m"
+            android:gravity="center"
+            android:text="@string/settings_ordinal_reset"
+            android:textSize="13sp"
+            android:textColor="@color/brand_primary"
+            android:background="@drawable/bg_chip"
+            android:paddingStart="@dimen/space_m"
+            android:paddingEnd="@dimen/space_m" />
+    </LinearLayout>
+
+    <!-- 检查更新 -->
+    <TextView
+        android:id="@+id/btn_check_update"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/touch_target"
+        android:layout_marginTop="@dimen/space_l"
+        android:gravity="center"
+        android:text="@string/settings_check_update"
+        android:textSize="14sp"
+        android:textColor="@color/brand_primary"
+        android:background="@drawable/bg_chip" />
+
+    <TextView
+        android:id="@+id/text_version"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_l"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textColor="@color/text_secondary" />
+
+</LinearLayout>
+</ScrollView>

@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_l">
+
+        <!-- 标题：类型名（中文即类型，无需图标） -->
+        <TextView
+            android:id="@+id/text_edit_title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_m"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            tools:text="点击" />
+
+        <!-- 点击专属：坐标点 + 取坐标 + 时长 -->
+        <LinearLayout
+            android:id="@+id/block_tap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <include
+                android:id="@+id/tap_coord"
+                layout="@layout/block_coord_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/tap_duration"
+                layout="@layout/block_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/tap_pre_delay"
+                layout="@layout/block_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/tap_repeat"
+                layout="@layout/block_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- 滑动专属：起点 + 终点 + 时长 -->
+        <LinearLayout
+            android:id="@+id/block_swipe"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                style="@style/EditorFieldLabel"
+                android:text="@string/step_swipe_from" />
+
+            <include
+                android:id="@+id/swipe_from"
+                layout="@layout/block_coord_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                style="@style/EditorFieldLabel"
+                android:text="@string/step_swipe_to" />
+
+            <include
+                android:id="@+id/swipe_to"
+                layout="@layout/block_coord_picker"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/swipe_duration"
+                layout="@layout/block_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/swipe_pre_delay"
+                layout="@layout/block_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <include
+                android:id="@+id/swipe_repeat"
+                layout="@layout/block_number"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- 等待专属：只需要时长（等待本身就是可见的延迟，不再带动作延迟） -->
+        <LinearLayout
+            android:id="@+id/block_wait"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <include
+                android:id="@+id/wait_duration"
+                layout="@layout/block_duration"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <!-- 循环专属：次数 + 循环体（M4 简化内联编辑） -->
+        <LinearLayout
+            android:id="@+id/block_loop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <!-- 次数：标签 + 编辑框同行，0 = 无限 -->
+
+            <LinearLayout style="@style/RowHorizontal">
+
+                <TextView
+                    style="@style/EditorFieldLabel"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/step_loop_times" />
+
+                <EditText
+                    android:id="@+id/edit_loop_body_times"
+                    style="@style/NumberField"
+                    android:layout_width="72dp"
+                    android:gravity="center" />
+
+                <TextView
+                    style="@style/EditorFieldHint"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:text="@string/editor_loop_zero_infinite" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/EditorFieldLabel"
+                android:text="@string/step_loop_body" />
+
+            <!-- 循环体步骤：复用 StepAdapter，只读 + 添加/删除 -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_loop_body"
+                android:layout_width="match_parent"
+                android:layout_height="192dp"
+                android:layout_marginTop="@dimen/space_xs" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="@dimen/space_s">
+
+                <TextView
+                    android:id="@+id/btn_loop_add_tap"
+                    style="@style/EditorLoopAddBtn"
+                    android:text="@string/step_tap" />
+
+                <TextView
+                    android:id="@+id/btn_loop_add_swipe"
+                    style="@style/EditorLoopAddBtn"
+                    android:text="@string/step_swipe" />
+
+                <TextView
+                    android:id="@+id/btn_loop_add_wait"
+                    style="@style/EditorLoopAddBtn"
+                    android:text="@string/step_wait" />
+            </LinearLayout>
+
+            <TextView
+                style="@style/EditorFieldHint"
+                android:layout_marginTop="@dimen/space_xs"
+                android:text="@string/step_loop_body_hint" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

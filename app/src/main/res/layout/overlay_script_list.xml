@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 浮层脚本列表：窗口 90%×70%，外部透明区点击 = 关闭 -->
+<com.auto.fairy.InjectShieldLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/list_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/picker_scrim"
+    android:clickable="true"
+    android:focusable="true"
+    android:focusableInTouchMode="true">
+
+    <!-- 卡片容器：宽高由 WindowManager 参数给出，最大宽 overlay_list_max_w -->
+    <LinearLayout
+        android:id="@+id/list_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:maxWidth="@dimen/overlay_list_max_w"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/bg_overlay_panel"
+        android:padding="@dimen/space_s">
+
+        <!-- 顶部手柄条：拖动移动；标题 + 更多 + 关闭 -->
+        <LinearLayout
+            android:id="@+id/list_handle"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/overlay_list_header_h"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/overlay_list_title"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/overlay_text" />
+
+            <!-- 更多：诊断 / 保活 / 设置入口 -->
+            <ImageButton
+                android:id="@+id/btn_list_more"
+                android:layout_width="@dimen/touch_target"
+                android:layout_height="@dimen/touch_target"
+                android:contentDescription="@string/overlay_more"
+                android:src="@drawable/ic_more"
+                android:background="@android:color/transparent"
+                android:tint="@color/overlay_text"
+                android:scaleType="centerInside"
+                android:padding="10dp" />
+
+            <ImageButton
+                android:id="@+id/btn_list_close"
+                android:layout_width="@dimen/touch_target"
+                android:layout_height="@dimen/touch_target"
+                android:contentDescription="@string/editor_close"
+                android:src="@drawable/ic_close"
+                android:background="@android:color/transparent"
+                android:tint="@color/overlay_text"
+                android:scaleType="centerInside"
+                android:padding="10dp" />
+        </LinearLayout>
+
+        <!-- 列表（高度占满卡片剩余，内部滚动） -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/list_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="@dimen/space_s"
+            android:scrollbars="vertical" />
+
+        <!-- 空态 -->
+        <TextView
+            android:id="@+id/list_empty"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/overlay_empty_hint"
+            android:textSize="13sp"
+            android:textColor="@color/overlay_text_secondary"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <!-- 底部操作条：新建 + 录制 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="@dimen/space_s">
+
+            <TextView
+                android:id="@+id/btn_list_new"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/touch_target"
+                android:layout_weight="1"
+                android:gravity="center"
+                android:text="@string/overlay_new_script"
+                android:textSize="14sp"
+                android:textColor="@color/overlay_text"
+                android:background="@drawable/bg_chip_dark"
+                android:paddingStart="@dimen/space_m"
+                android:paddingEnd="@dimen/space_m" />
+
+            <TextView
+                android:id="@+id/btn_list_record"
+                android:layout_width="0dp"
+                android:layout_height="@dimen/touch_target"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_s"
+                android:gravity="center"
+                android:text="@string/overlay_record_action"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/overlay_text"
+                android:background="@drawable/bg_fab"
+                android:paddingStart="@dimen/space_m"
+                android:paddingEnd="@dimen/space_m" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 弹层菜单：与 MainActivity 同一套 id，PopupMenus 可直接复用 -->
+    <FrameLayout
+        android:id="@+id/menu_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/menu_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|start"
+            android:orientation="vertical"
+            android:minWidth="160dp"
+            android:background="@drawable/bg_card"
+            android:elevation="8dp"
+            android:padding="@dimen/space_s" />
+    </FrameLayout>
+
+</com.auto.fairy.InjectShieldLayout>

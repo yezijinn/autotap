@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 迷你条面板背景：8dp 圆角，比 bg_overlay_panel 的 16dp 更紧凑 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/overlay_panel_alpha" />
+    <corners android:radius="@dimen/corner_chip" />
+</shape>

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/record_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 透明触摸捕获层：覆盖全屏，吃掉底层触摸 -->
+    <View
+        android:id="@+id/record_touch_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/transparent" />
+
+    <!-- 顶部信息条（半透明遮罩） -->
+    <LinearLayout
+        android:id="@+id/record_banner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@color/record_scrim"
+        android:clickable="true"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_l"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
+
+        <LinearLayout style="@style/RowHorizontal">
+
+            <View
+                android:layout_width="@dimen/status_dot"
+                android:layout_height="@dimen/status_dot"
+                android:background="@drawable/bg_status_dot"
+                android:layout_marginEnd="@dimen/space_s" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/record_title"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="@color/overlay_text" />
+
+            <TextView
+                android:id="@+id/text_record_steps"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="@dimen/space_m"
+                android:textSize="13sp"
+                android:textColor="@color/overlay_text_secondary" />
+
+            <TextView
+                android:id="@+id/text_record_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="13sp"
+                android:textColor="@color/overlay_text"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/record_hint"
+            android:textSize="12sp"
+            android:textColor="@color/overlay_text_secondary" />
+    </LinearLayout>
+
+    <!-- 底部操作条 -->
+    <LinearLayout
+        android:id="@+id/record_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:background="@color/record_scrim"
+        android:clickable="true"
+        android:padding="@dimen/space_l">
+
+        <TextView
+            android:id="@+id/btn_record_cancel"
+            style="@style/OverlayBarButton"
+            android:text="@string/record_cancel"
+            android:background="@drawable/bg_chip_dark" />
+
+        <TextView
+            android:id="@+id/btn_record_done"
+            style="@style/OverlayBarButton"
+            android:layout_marginStart="@dimen/space_m"
+            android:text="@string/record_done"
+            android:textStyle="bold"
+            android:background="@drawable/bg_fab" />
+    </LinearLayout>
+
+</FrameLayout>

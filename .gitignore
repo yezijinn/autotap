@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+.agent-workflow/
+/local.properties
+/.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+
+# 构建产物与日志
+*.log
+/*.apk
+
+.fossil/

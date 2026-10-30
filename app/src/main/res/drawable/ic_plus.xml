@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 添加：实心加号，与三角/方块/叉同一套 24dp 视觉重量 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.6,4 h2.8 v6.6 h6.6 v2.8 h-6.6 v6.6 h-2.8 v-6.6 h-6.6 v-2.8 h6.6 z" />
+</vector>

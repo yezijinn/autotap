@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 诊断 / 保活 / 设置 浮层容器：透明全屏 + 居中卡片（90%×70% 由代码设） -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/panel_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/picker_scrim"
+    android:clickable="true"
+    android:focusable="true">
+
+    <LinearLayout
+        android:id="@+id/panel_card"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:background="@drawable/bg_dialog_card"
+        android:clipToOutline="true">
+
+        <!-- 顶部手柄条：标题 + 关闭（拖动仅浮层列表需要，这里固定居中） -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/appbar_height"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingStart="@dimen/space_l"
+            android:paddingEnd="@dimen/space_s">
+
+            <TextView
+                android:id="@+id/text_panel_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary" />
+
+            <TextView
+                android:id="@+id/btn_panel_close"
+                style="@style/AppbarTextButton"
+                android:contentDescription="@string/editor_close"
+                android:text="@string/editor_close" />
+        </LinearLayout>
+
+        <!-- Fragment 容器：诊断 / 保活 / 设置内容 -->
+        <FrameLayout
+            android:id="@+id/panel_container"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+    </LinearLayout>
+</FrameLayout>

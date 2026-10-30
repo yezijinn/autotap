@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#2F6FED</color>
+    <color name="brand_primary_dark">#1F4FB5</color>
+    <color name="window_background">#FFFFFFFF</color>
+
+    <!-- 状态色：运行中 / 暂停 / 停止 / 错误 -->
+    <color name="status_running">#2BB673</color>
+    <color name="status_paused">#F2994A</color>
+    <color name="status_stopped">#9AA0A6</color>
+    <color name="status_error">#EB5757</color>
+
+    <!-- 标准九色色板：七彩 + 黑白 -->
+    <color name="swatch_red">#EB5757</color>
+    <color name="swatch_orange">#F2994A</color>
+    <color name="swatch_yellow">#F2C94C</color>
+    <color name="swatch_green">#27AE60</color>
+    <color name="swatch_cyan">#2BB6C4</color>
+    <color name="swatch_blue">#2F6FED</color>
+    <color name="swatch_purple">#8B5CF6</color>
+    <color name="swatch_white">#FFFFFF</color>
+    <color name="swatch_black">#1A1D21</color>
+
+    <!-- 表层 -->
+    <color name="surface">#FFFFFFFF</color>
+    <color name="surface_variant">#F2F4F7</color>
+    <color name="text_primary">#1A1D21</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="divider">#E5E7EB</color>
+
+    <!-- 悬浮窗背景（深色半透明，保证叠在任何 App 上都可读） -->
+    <color name="overlay_panel_alpha">#E61F2937</color>
+    <color name="overlay_text">#FFFFFFFF</color>
+    <color name="overlay_text_secondary">#C7CBD1</color>
+
+    <!-- 录制浮层遮罩 -->
+    <color name="record_scrim">#99000000</color>
+
+    <!-- M4 取坐标遮罩 -->
+    <color name="picker_scrim">#66000000</color>
+
+    <!-- 权限引导条 -->
+    <color name="guide_background">#FFF4E5</color>
+    <color name="guide_text">#8A5A00</color>
+</resources>

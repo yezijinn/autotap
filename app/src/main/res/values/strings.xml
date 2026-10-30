@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">精灵点击器</string>
+
+    <!-- 主页面 -->
+    <string name="nav_title_scripts">脚本</string>
+    <string name="nav_title_diagnose">诊断</string>
+    <string name="nav_title_keepalive">保活</string>
+    <string name="nav_title_settings">设置</string>
+    <string name="empty_scripts_title">还没有脚本</string>
+    <string name="empty_scripts_hint">点击下方按钮新建，或导入一个脚本文件</string>
+    <string name="fab_new_script">新建脚本</string>
+    <string name="fab_import_script">导入脚本</string>
+    <string name="fab_record_script">录制脚本</string>
+    <string name="script_loops_format">循环 %1$d 次</string>
+    <string name="script_loops_infinite">无限循环</string>
+    <string name="script_steps_format">%1$d 步</string>
+    <string name="script_modified_format">修改于 %1$s</string>
+    <string name="status_playing">播放中</string>
+    <string name="status_paused_label">已暂停</string>
+    <string name="status_error_label">出错</string>
+    <string name="menu_play">播放</string>
+    <string name="menu_pause">暂停</string>
+    <string name="menu_stop">停止</string>
+    <string name="menu_activate">激活</string>
+    <string name="menu_edit">编辑</string>
+    <string name="menu_export">导出</string>
+    <string name="menu_delete">删除</string>
+    <string name="toast_permission_overlay">请授予「显示在其他应用上层」权限</string>
+    <string name="toast_permission_a11y">请在无障碍设置中开启精灵点击器</string>
+    <!-- 浮层 addView 失败（窗口被系统拒绝 / 服务已断）：必须说出来，否则用户只看到「点了没反应」 -->
+    <string name="toast_overlay_add_failed">浮层没能显示，请再点一次</string>
+
+    <!-- 悬浮窗 -->
+    <string name="overlay_health_alive">正常</string>
+    <string name="overlay_health_dead">已失效</string>
+
+    <!-- 录制浮层 -->
+    <string name="record_title">正在录制</string>
+    <string name="record_steps_format">已录 %1$d 步</string>
+    <string name="record_hint">录制期间无法操作底层应用，完成或取消后退出</string>
+    <string name="record_cancel">取消</string>
+    <string name="record_done">完成</string>
+
+    <!-- 占位页（M3+） -->
+    <string name="placeholder_settings">设置页（M3 实现）</string>
+
+    <!-- M2 补充文案 -->
+    <string name="overlay_state_ready">就绪</string>
+    <string name="toast_script_empty">脚本没有任何动作，无法播放</string>
+    <string name="toast_a11y_needed">请先开启无障碍服务</string>
+    <string name="toast_playback_stopped_no_backend">无障碍服务已断开，回放停止</string>
+    <string name="toast_import_ok">已导入「%1$s」</string>
+    <string name="toast_import_failed">导入失败：%1$s</string>
+    <string name="import_too_large">文件超过 %1$d MB，不是脚本文件</string>
+    <string name="script_too_large">脚本过大（%1$d MB，上限 %2$d MB）</string>
+    <string name="toast_export_ok">已导出</string>
+    <string name="toast_export_failed">导出失败</string>
+    <string name="toast_record_empty">没有录到任何动作</string>
+    <string name="toast_record_saved">已保存「%1$s」</string>
+    <string name="toast_script_created">已创建「%1$s」</string>
+    <string name="toast_script_deleted">已删除</string>
+    <string name="toast_save_failed">保存失败，请重试</string>
+    <string name="toast_play_start_failed">播放启动失败，请稍后重试</string>
+    <string name="toast_play_restart">正在播放，已重新开始</string>
+    <string name="toast_play_target_unreadable">当前脚本文件已损坏，可在脚本列表删除后重建</string>
+    <string name="toast_play_target_missing">当前脚本已不存在，请重新选择脚本</string>
+    <string name="toast_gap_floor">相邻动作间隔不足 %1$dms，实际按 %1$dms 以上执行</string>
+    <string name="toast_screen_mismatch">屏幕与录制时不同 %1$s，已拒绝播放</string>
+    <string name="toast_paused_after_modal">已暂停，点 ▶ 继续</string>
+    <string name="toast_recording_needs_overlay">录制需要「显示在其他应用上层」权限</string>
+    <string name="dialog_delete_title">删除脚本</string>
+    <string name="dialog_delete_message">确定删除「%1$s」？此操作不可撤销。</string>
+    <string name="dialog_new_script_title">新建脚本</string>
+    <string name="dialog_new_script_hint">脚本名称</string>
+    <string name="dialog_default_script_name">新建脚本 %1$d</string>
+    <string name="dialog_recorded_script_name">录制 %1$s</string>
+    <string name="draft_recover_title">上次录制未完成</string>
+    <string name="draft_recover_message">上次录制有 %1$d 步未保存，是否恢复？</string>
+    <string name="draft_recover_ok">恢复</string>
+    <string name="draft_recover_discard">放弃</string>
+    <string name="dialog_ok">确定</string>
+    <string name="dialog_cancel">取消</string>
+    <string name="permission_hint_a11y">无障碍服务未开启，无法执行点击</string>
+    <string name="permission_hint_a11y_disconnected">无障碍服务已开启，但未连接，请关闭后再开启一次</string>
+    <string name="permission_hint_overlay">悬浮窗权限未开启，无法显示控制面板</string>
+    <string name="permission_hint_both">无障碍与悬浮窗权限未开启</string>
+    <string name="permission_fix">去开启</string>
+    <string name="a11y_service_description">用于执行脚本中的点击与滑动手势</string>
+
+    <!-- 诊断页 -->
+    <string name="diagnose_section_backend">后端状态</string>
+    <string name="diagnose_section_playback">播放统计</string>
+    <string name="diagnose_section_device">设备信息</string>
+    <string name="diagnose_section_jitter">点击抖动</string>
+    <string name="diagnose_section_selfcheck">保活自检</string>
+    <string name="diagnose_label_a11y">无障碍服务</string>
+    <string name="diagnose_label_caps">注入能力</string>
+    <string name="diagnose_label_health">后端健康</string>
+    <string name="diagnose_label_state">当前状态</string>
+    <string name="diagnose_label_cycle">当前循环</string>
+    <string name="diagnose_label_cursor">播放游标</string>
+    <string name="diagnose_label_error">最近错误</string>
+    <string name="diagnose_label_device">型号</string>
+    <string name="diagnose_label_android">系统版本</string>
+    <string name="diagnose_label_screen">屏幕</string>
+    <string name="diagnose_a11y_connected">已连接</string>
+    <string name="diagnose_a11y_enabled_not_connected">系统已开启，服务未连接</string>
+    <string name="diagnose_a11y_off">未开启</string>
+    <string name="diagnose_caps_format">单批 ≤%1$d 笔 · ≤%2$d 秒 · 片跨 %3$d ms · 延迟 %4$s</string>
+    <string name="diagnose_latency_low">低</string>
+    <string name="diagnose_latency_normal">中</string>
+    <string name="diagnose_latency_high">高</string>
+    <string name="diagnose_cycle_format">第 %1$d 巡（已完成 %2$d 次）</string>
+    <string name="diagnose_cursor_format">第 %1$d 片</string>
+    <string name="diagnose_none">无</string>
+    <string name="diagnose_device_format">%1$s（%2$s）</string>
+    <string name="diagnose_android_format">Android %1$s（API %2$d）</string>
+    <string name="diagnose_screen_format">%1$d × %2$d · %3$.1f Hz</string>
+    <string name="diagnose_jitter_format">按压起点最小间隔 %1$d ms</string>
+    <string name="diagnose_selfcheck_hint">点开始后切到其他应用至少 1 分钟再回来。结论按进程标识判定：进程号重置即说明被系统回收。无 100% 保活，这里只给实测结论。</string>
+    <string name="diagnose_selfcheck_start">开始自检</string>
+    <string name="diagnose_selfcheck_running">自检中：已离开 %1$s</string>
+    <string name="diagnose_selfcheck_toast">已记录时间，请切走至少 1 分钟后回来</string>
+    <string name="diagnose_selfcheck_none">尚未自检</string>
+    <string name="diagnose_selfcheck_survived">进程与无障碍服务均存活（离开 %1$s）</string>
+    <string name="diagnose_selfcheck_process_only">进程存活，但无障碍服务已断开（离开 %1$s）</string>
+    <string name="diagnose_selfcheck_killed">进程曾被系统回收，当前是重启后的进程（离开 %1$s）</string>
+    <string name="diagnose_selfcheck_rebooted">自检期间设备重启，本次结论无效</string>
+    <string name="diagnose_selfcheck_playback_lost">；回放已停止</string>
+    <string name="diagnose_duration_min_sec">%1$d 分 %2$d 秒</string>
+    <string name="diagnose_duration_sec">%1$d 秒</string>
+
+    <!-- 保活引导页 -->
+    <string name="keepalive_notice">没有任何设置能保证 100% 保活。下面几项只能降低被杀概率，是否有效请用诊断页的自检实测。</string>
+    <string name="keepalive_section_permissions">权限检查</string>
+    <string name="keepalive_section_volume">音量键</string>
+    <string name="keepalive_rom_title_format">%1$s 保活设置</string>
+    <string name="keepalive_a11y">无障碍服务</string>
+    <string name="keepalive_overlay">悬浮窗权限</string>
+    <string name="keepalive_battery">电池优化白名单</string>
+    <string name="keepalive_background">后台运行限制</string>
+    <string name="keepalive_go">去设置</string>
+    <string name="keepalive_on">已开启</string>
+    <string name="keepalive_off">未开启</string>
+    <string name="keepalive_battery_on">已加入白名单</string>
+    <string name="keepalive_battery_off">未加入，可能被省电策略清理</string>
+    <string name="keepalive_background_on">未受限制</string>
+    <string name="keepalive_background_off">已受限制，后台可能被切断</string>
+    <string name="keepalive_unknown">无法读取</string>
+    <string name="keepalive_volume_switch">音量减键开始/暂停</string>
+    <string name="keepalive_volume_hint">开启后音量减键会被拦截：可播放时用于开始/暂停，其余情况仍交给系统调音量</string>
+    <string name="volume_key_hint">音量键将用于开始/暂停</string>
+    <string name="keepalive_rom_xiaomi">小米 / Redmi</string>
+    <string name="keepalive_rom_huawei">华为 / 荣耀</string>
+    <string name="keepalive_rom_oppo">OPPO / 一加 / realme</string>
+    <string name="keepalive_rom_vivo">vivo / iQOO</string>
+    <string name="keepalive_rom_samsung">三星</string>
+    <string name="keepalive_rom_generic">通用</string>
+    <string name="keepalive_steps_xiaomi">1. 设置 → 应用设置 → 授权管理 → 自启动：允许\n2. 应用信息 → 省电策略 → 无限制\n3. 最近任务里下拉任务卡片并上锁</string>
+    <string name="keepalive_steps_huawei">1. 设置 → 应用 → 应用启动管理 → 本应用改为手动管理\n2. 自启动、关联启动、后台活动三项全部打开\n3. 最近任务里锁定本应用</string>
+    <string name="keepalive_steps_oppo">1. 应用信息 → 耗电管理 → 允许后台运行\n2. 允许自启动\n3. 关闭智能省电与睡眠待机优化</string>
+    <string name="keepalive_steps_vivo">1. 设置 → 电池 → 后台耗电管理 → 允许后台高耗电\n2. 应用信息 → 自启动：允许\n3. 最近任务里锁定本应用</string>
+    <string name="keepalive_steps_samsung">1. 设置 → 电池 → 后台使用限制 → 休眠应用\n2. 把本应用从「休眠应用」列表移除\n3. 应用信息 → 电池 → 不受限制</string>
+    <string name="keepalive_steps_generic">1. 关闭系统省电模式\n2. 允许本应用自启动与后台活动\n3. 最近任务里锁定本应用</string>
+
+    <!-- ============ M4 脚本编辑器 ============ -->
+    <string name="editor_back">返回</string>
+    <string name="editor_save">保存</string>
+    <string name="editor_name_hint">未命名脚本</string>
+    <string name="editor_close">关闭</string>
+    <string name="editor_cancel">取消</string>
+    <string name="editor_confirm">确认</string>
+
+    <string name="editor_loop_title">脚本循环次数</string>
+    <string name="editor_loop_zero_infinite">次，0 = 无限</string>
+
+    <string name="editor_steps_title">步骤</string>
+    <string name="editor_add_step">添加步骤</string>
+    <string name="editor_empty_title">还没有步骤</string>
+    <string name="editor_empty_hint">点右下角 + 添加点击、滑动、等待或循环</string>
+
+    <string name="editor_move_up">上移</string>
+    <string name="editor_move_down">下移</string>
+    <string name="editor_delete_step">删除步骤</string>
+
+    <string name="editor_pick_coord">取坐标</string>
+    <string name="editor_duration">持续时间</string>
+    <string name="editor_swipe_duration">滑动时长</string>
+    <string name="editor_duration_ms">毫秒（ms）</string>
+    <string name="editor_action_delay">动作延迟</string>
+    <string name="editor_action_delay_hint">输入（ms），动作执行前先等这么久；0 = 无延迟，留空 = 跟随脚本默认（当前 %1$dms）</string>
+    <string name="editor_step_repeat">本步循环</string>
+    <string name="editor_step_repeat_hint">次，每轮都会先等动作延迟；1 = 只执行一次</string>
+    <string name="editor_default_delay_title">默认动作延迟</string>
+    <string name="editor_default_delay_zero">毫秒，0 = 无</string>
+    <string name="editor_screen_format">屏幕 %1$d × %2$d</string>
+    <string name="editor_screen_recorded_format">屏幕 %1$d × %2$d · 录制于 %3$d × %4$d</string>
+
+    <string name="editor_progress_format">第 %1$d 巡 / 共 %2$s 次</string>
+    <string name="editor_loop_infinite">∞</string>
+
+    <!-- 步骤类型名 -->
+    <string name="step_tap">点击</string>
+    <string name="step_swipe">滑动</string>
+    <string name="step_wait">等待</string>
+    <string name="step_delay_default">默认</string>
+    <string name="step_loop">循环</string>
+    <string name="step_multi">多指</string>
+    <string name="step_swipe_from">起点</string>
+    <string name="step_swipe_to">终点</string>
+    <string name="step_loop_times">本循环重复次数</string>
+    <string name="step_loop_body">循环体步骤</string>
+    <string name="step_loop_body_hint">循环体内的步骤每轮按顺序执行一遍；循环体内暂不支持再嵌套循环（后续版本）</string>
+
+    <!-- 取坐标浮层 -->
+    <string name="picker_title">取坐标</string>
+    <string name="picker_hint">拖动或点击屏幕任意位置选取坐标</string>
+
+    <!-- 提示 -->
+    <string name="toast_saved">已保存</string>
+    <string name="toast_picker_need_overlay">取坐标需要「显示在其他应用上层」权限</string>
+    <string name="toast_loop_empty_body">循环体内至少需要 1 个步骤</string>
+    <string name="dialog_discard_title">放弃修改</string>
+    <string name="dialog_discard_message">当前修改尚未保存，确定退出？</string>
+    <string name="dialog_discard_exit">退出</string>
+
+    <!-- 步骤摘要 / 坐标读数格式 -->
+    <string name="step_summary_tap">点击</string>
+    <string name="step_summary_tap_sub">(%1$d,%2$d) %3$dms %4$s %5$d</string>
+    <string name="step_summary_swipe">滑动</string>
+    <string name="step_summary_swipe_sub">(%1$d,%2$d)→(%3$d,%4$d) %5$dms %6$s %7$d</string>
+    <string name="step_summary_delay">等待 %1$dms</string>
+    <string name="step_summary_delay_sub">独立等待步骤</string>
+    <string name="step_summary_loop">循环 %1$s（内含 %2$d 步）</string>
+    <string name="step_summary_loop_sub">循环体每轮按顺序执行一遍</string>
+    <string name="step_summary_multi">多指 %1$d 轨迹</string>
+    <string name="step_summary_multi_sub">%1$dms</string>
+    <string name="step_loop_times_value">%1$d 次</string>
+    <string name="coord_norm_format">归一化 %1$.2f, %2$.2f</string>
+    <string name="coord_px_format">像素 %1$d × %2$d</string>
+    <string name="picker_px_format">%1$d × %2$d</string>
+    <string name="picker_norm_format">%1$.2f, %2$.2f</string>
+    <string name="picker_screen_format">屏幕 %1$d × %2$d</string>
+    <string name="toast_step_unsupported">该步骤类型暂不支持编辑</string>
+
+    <!-- ============ M5 紧凑悬浮窗 ============ -->
+    <string name="overlay_list_title">脚本</string>
+    <string name="overlay_new_script">新建脚本</string>
+    <string name="overlay_record_action">录制</string>
+    <string name="overlay_empty_hint">还没有脚本，点下方按钮新建</string>
+    <string name="overlay_more">更多</string>
+    <string name="overlay_diagnose">诊断</string>
+    <string name="overlay_keepalive">保活</string>
+    <string name="overlay_settings">设置</string>
+    <string name="overlay_meta_infinite">∞ · %1$d 步</string>
+    <string name="overlay_meta_loop">%1$d · %2$d 步</string>
+
+    <!-- ============ M6 极简面板 + 坐标层 ============ -->
+    <string name="coord_show_pending">面板关闭后显示坐标</string>
+    <string name="coord_need_session">激活脚本后才会显示坐标</string>
+    <string name="coord_too_many">坐标超过 %1$d 个，多出的点不可拖动</string>
+    <string name="coord_drag_hint">拖动十字可直接改坐标</string>
+    <string name="toast_coord_saved">坐标已更新</string>
+
+    <!-- ============ M7 迷你条 ============ -->
+    <string name="mini_no_script">无脚本</string>
+    <string name="mini_script_broken">脚本损坏</string>
+    <string name="script_broken_chip">已损坏</string>
+    <string name="script_broken_hint">文件读取失败，可删除后重建</string>
+    <string name="toast_script_broken">脚本文件已损坏，只能删除后重建</string>
+    <string name="toast_add_step_unavailable">当前脚本不可用，请在列表选择或新建</string>
+    <string name="toast_script_activated">已激活，点小窗开始运行</string>
+    <string name="settings_volume_key">音量键快捷开始暂停</string>
+    <string name="settings_volume_key_hint">播放中按音量减键开始或暂停</string>
+    <string name="settings_snap_edge">悬浮窗贴边</string>
+    <string name="settings_snap_edge_hint">拖动松手后自动贴到屏幕边缘</string>
+    <string name="settings_coord_layer">显示坐标标记</string>
+    <string name="settings_coord_layer_hint">激活脚本后显示其坐标点，跨页面与桌面常驻</string>
+    <string name="settings_coord_move">坐标可拖</string>
+    <string name="settings_coord_move_hint">直接拖动屏幕上的红色十字即可改坐标，松手写回脚本</string>
+    <string name="settings_ordinal_title">步骤序号字体</string>
+    <string name="settings_ordinal_hint">屏幕上坐标数字的样子，改完即刻生效</string>
+    <string name="settings_ordinal_color">字体颜色</string>
+    <string name="settings_ordinal_size">字号（sp）</string>
+    <string name="settings_ordinal_gap">数字左右间距</string>
+    <string name="settings_ordinal_gap_value">%1$ddp</string>
+    <string name="settings_ordinal_reset">恢复默认</string>
+
+    <string name="settings_version_format">版本 %1$s</string>
+    <string name="overlay_btn_close_desc">关闭悬浮窗</string>
+    <string name="overlay_btn_add_desc">添加步骤</string>
+    <string name="overlay_btn_help_desc">显示或隐藏坐标标记</string>
+    <string name="overlay_add_step">添加步骤</string>
+    <string name="overlay_add_step_hint">选择要追加的步骤类型</string>
+    <string name="toast_step_added_tap">已添加点击步骤</string>
+    <string name="toast_step_added_swipe">已添加滑动步骤</string>
+    <string name="toast_add_step_no_script">还没有脚本，先新建一个</string>
+    <string name="toast_add_step_recording">录制中无法添加步骤，请先结束录制</string>
+    <string name="toast_overlay_closed">悬浮窗已关闭，点「激活」可重新打开</string>
+    <string name="settings_check_update">检查更新</string>
+    <string name="update_title_available">发现新版本</string>
+    <string name="update_title_prompt">提示</string>
+    <string name="update_local_version">你目前的版本：%1$d</string>
+    <string name="update_latest_version">在线最新版本：%1$d</string>
+    <string name="update_latest_unreachable">在线最新版本：访问 gitee.com / github.com 失败</string>
+    <string name="update_uptodate">已是最新版本 无需更新</string>
+    <string name="update_btn_later">稍后</string>
+    <string name="update_btn_go">去更新</string>
+    <string name="update_btn_ok">知道了</string>
+    <string name="update_checking">检查中…</string>
+</resources>

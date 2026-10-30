@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 迷你悬浮窗：单层常驻条，无圆形菜单球、无工具条。
+     深色半透明底 + 白图标：叠在浅色或深色 App 上都看得见（裸图标在深色界面上
+     几乎不可见——游戏画面基本都是深色，播放/停止/关闭会一起消失）。
+     布局：开始/暂停(三角或双竖线) · 脚本名(文字) · 停止(方块) · 添加(加号) · 关闭(叉) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/overlay_root"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_overlay_panel_compact"
+    android:orientation="horizontal"
+    android:paddingHorizontal="6dp"
+    android:paddingVertical="2dp"
+    android:gravity="center_vertical">
+
+    <!-- 开始/暂停：侧向三角（开始）/ 双竖线（暂停） -->
+    <ImageView
+        android:id="@+id/btn_overlay_toggle"
+        android:layout_width="@dimen/overlay_btn_size"
+        android:layout_height="@dimen/overlay_btn_size"
+        android:contentDescription="@string/menu_play"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_play_triangle"
+        android:tint="@color/overlay_text" />
+
+    <!-- 脚本名：取前 6 字，唯一文字项，同时是拖动手柄 -->
+    <TextView
+        android:id="@+id/text_overlay_name"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/overlay_btn_size"
+        android:minWidth="28dp"
+        android:singleLine="true"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:textColor="@color/overlay_text"
+        android:text="@string/mini_no_script"
+        tools:text="每日签到" />
+
+    <!-- 停止：实心正方形 -->
+    <ImageView
+        android:id="@+id/btn_overlay_stop"
+        android:layout_width="@dimen/overlay_btn_size"
+        android:layout_height="@dimen/overlay_btn_size"
+        android:contentDescription="@string/menu_stop"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_stop_square"
+        android:tint="@color/status_error" />
+
+    <!-- 添加：加号，弹出「点击 / 滑动」就地追加步骤 -->
+    <ImageView
+        android:id="@+id/btn_overlay_add"
+        android:layout_width="@dimen/overlay_btn_size"
+        android:layout_height="@dimen/overlay_btn_size"
+        android:contentDescription="@string/overlay_btn_add_desc"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_plus"
+        android:tint="@color/overlay_text" />
+
+    <!-- 帮助：问号，切换「显示坐标标记」与设置页同口径 -->
+    <ImageView
+        android:id="@+id/btn_overlay_help"
+        android:layout_width="@dimen/overlay_btn_size"
+        android:layout_height="@dimen/overlay_btn_size"
+        android:contentDescription="@string/overlay_btn_help_desc"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_help"
+        android:tint="@color/overlay_text" />
+
+    <!-- 关闭：叉号，收起整个悬浮窗 -->
+    <ImageView
+        android:id="@+id/btn_overlay_close"
+        android:layout_width="@dimen/overlay_btn_size"
+        android:layout_height="@dimen/overlay_btn_size"
+        android:contentDescription="@string/overlay_btn_close_desc"
+        android:scaleType="centerInside"
+        android:src="@drawable/ic_close"
+        android:tint="@color/overlay_text" />
+
+</LinearLayout>

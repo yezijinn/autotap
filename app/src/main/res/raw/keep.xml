@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 资源压缩保护：无障碍服务的配置 XML 只通过 Manifest 的 meta-data 引用，
+     AGP 的资源压缩会把它当“未引用”删掉，导致系统解析不到服务配置、服务直接消失。 -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@xml/accessibility_service_config" />

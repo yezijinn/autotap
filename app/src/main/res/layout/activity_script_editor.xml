@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_editor"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/window_background">
+
+    <!-- 顶部栏：脚本名（左，作标题）/ 关闭（右，X 图标） -->
+    <LinearLayout
+        android:id="@+id/editor_appbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/appbar_height"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_s"
+        android:background="@color/surface">
+
+        <!-- 脚本名：内联 EditText，作标题呈现；点击即改，失焦/保存时回写 -->
+        <EditText
+            android:id="@+id/text_editor_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="@dimen/space_s"
+            android:background="@android:color/transparent"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:hint="@string/editor_name_hint"
+            android:importantForAutofill="no"
+            tools:text="每日签到" />
+
+        <!-- 关闭：仅 X 图标，无文字 -->
+        <ImageButton
+            android:id="@+id/btn_editor_back"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="@string/editor_back"
+            android:src="@drawable/ic_close"
+            android:tint="@color/text_primary"
+            android:background="@android:color/transparent"
+            android:scaleType="centerInside"
+            android:padding="12dp" />
+    </LinearLayout>
+
+    <!-- 唯一滚动容器：设置区/预览区作为头部条目，步骤卡片紧随其后，
+         这样既不会出现嵌套 RecyclerView 被裁切，也能整页滚动 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_steps"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_l"
+        android:paddingBottom="@dimen/space_l"
+        android:scrollbars="vertical" />
+
+    <!-- 底部操作条：保存（左）/ 添加步骤（右） -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/surface">
+
+        <!-- 保存：左下角，与右下角「添加步骤」对称 -->
+        <TextView
+            android:id="@+id/btn_editor_save"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/touch_target"
+            android:layout_gravity="start"
+            android:layout_margin="@dimen/space_l"
+            android:gravity="center"
+            android:minWidth="88dp"
+            android:contentDescription="@string/editor_save"
+            android:text="@string/editor_save"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/brand_primary"
+            android:paddingStart="@dimen/space_l"
+            android:paddingEnd="@dimen/space_l" />
+
+        <TextView
+            android:id="@+id/fab_add_step"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/touch_target"
+            android:layout_gravity="end"
+            android:layout_margin="@dimen/space_l"
+            android:gravity="center"
+            android:minWidth="88dp"
+            android:text="@string/editor_add_step"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:textColor="@color/overlay_text"
+            android:background="@drawable/bg_fab"
+            android:paddingStart="@dimen/space_l"
+            android:paddingEnd="@dimen/space_l" />
+    </FrameLayout>
+</LinearLayout>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自适应图标前景层：白色「点击」符号
+     - 108x108 viewport；全部笔画落在 72x72 安全区内（x/y 都在 24..84），
+       圆形、方形、水滴等任意遮罩裁切都切不到字形本身
+     - 相对参考图的删减：去掉外圈发光圆点、同心圆弧、电路细线；
+       按钮窗内多层涟漪只保留中心实心圆点；下方点按痕由 4 根收为 3 根。
+       48dp 显示时仍能一眼读出「手指按下按钮」 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 按下的手指：竖杆（顶端半圆）+ 向右的手背短臂 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M47,32A7,7 0 0 1 61,32V47H47Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M60,28H71A4,4 0 0 1 75,32A4,4 0 0 1 71,36H60Z" />
+
+    <!-- 被按的按钮：圆角矩形挖出显示窗（evenOdd 一正一负） -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M35,40H73A9,9 0 0 1 82,49V59A9,9 0 0 1 73,68H35A9,9 0 0 1 26,59V49A9,9 0 0 1 35,40ZM40,50H68A4,4 0 0 1 72,54V56A4,4 0 0 1 68,60H40A4,4 0 0 1 36,56V54A4,4 0 0 1 40,50Z" />
+
+    <!-- 显示窗中心圆点 -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,55m-3.6,0a3.6,3.6 0 1 0,7.2 0a3.6,3.6 0 1 0,-7.2 0" />
+
+    <!-- 下方点按痕：三根圆头短棒，向外扇形展开 -->
+    <path
+        android:pathData="M43,79.5L45.6,73.6"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M54,80.5L54,73.5"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M65,79.5L62.4,73.6"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="5.5"
+        android:strokeLineCap="round" />
+</vector>

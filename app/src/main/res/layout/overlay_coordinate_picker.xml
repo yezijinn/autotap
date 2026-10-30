@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 取坐标浮层：全屏遮罩 + 中心准星 + 底部读数与操作。
+     根用 InjectShieldLayout：回放中注入的点击整串丢弃（含确认/取消按钮），
+     与其他三条模态同一契约——不然脚本能把准星移走、把错坐标写进步骤。 -->
+<com.auto.fairy.InjectShieldLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/picker_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- 半透明遮罩：让底层画面隐约可见；触摸捕获层吃事件 -->
+    <View
+        android:id="@+id/picker_touch_layer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/picker_scrim" />
+
+    <!-- 十字准星 + 读数（自定义 View 绘制） -->
+    <com.auto.fairy.editor.CoordinateCrosshair
+        android:id="@+id/picker_crosshair"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- 顶部读数条 -->
+    <LinearLayout
+        android:id="@+id/picker_readout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_gravity="top"
+        android:background="@color/overlay_panel_alpha"
+        android:padding="@dimen/space_l">
+
+        <TextView
+            android:id="@+id/text_picker_px"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/overlay_text"
+            android:text="@string/picker_title"
+            tools:text="540 × 1920" />
+
+        <TextView
+            android:id="@+id/text_picker_hint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/picker_hint"
+            android:textSize="12sp"
+            android:textColor="@color/overlay_text_secondary" />
+
+        <TextView
+            android:id="@+id/text_picker_norm"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/space_xs"
+            android:textSize="13sp"
+            android:textColor="@color/overlay_text_secondary"
+            tools:text="0.50, 0.75" />
+
+        <TextView
+            android:id="@+id/text_picker_screen"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="12sp"
+            android:textColor="@color/overlay_text_secondary"
+            tools:text="屏幕 1080 × 2160" />
+    </LinearLayout>
+
+    <!-- 底部操作 -->
+    <LinearLayout
+        android:id="@+id/picker_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="bottom"
+        android:gravity="center"
+        android:background="@color/overlay_panel_alpha"
+        android:padding="@dimen/space_l">
+
+        <TextView
+            android:id="@+id/btn_picker_cancel"
+            style="@style/OverlayBarButton"
+            android:text="@string/editor_cancel"
+            android:background="@drawable/bg_chip_dark" />
+
+        <TextView
+            android:id="@+id/btn_picker_confirm"
+            style="@style/OverlayBarButton"
+            android:layout_marginStart="@dimen/space_m"
+            android:text="@string/editor_confirm"
+            android:textStyle="bold"
+            android:background="@drawable/bg_fab" />
+    </LinearLayout>
+</com.auto.fairy.InjectShieldLayout>

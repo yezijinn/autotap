@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 标准色板中的单个色块：32dp 圆形，描边区分白/黑。
+     tint 由代码按颜色资源设置，选中态加粗描边。 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="#FFFFFF" />
+    <stroke
+        android:width="2dp"
+        android:color="#B0B4BA" />
+</shape>

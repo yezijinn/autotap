@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/text_duration_label"
+        style="@style/EditorFieldLabel"
+        android:text="@string/editor_duration" />
+
+    <EditText
+        android:id="@+id/edit_duration"
+        style="@style/NumberField"
+        android:layout_width="120dp"
+        android:paddingStart="@dimen/space_m"
+        android:paddingEnd="@dimen/space_m" />
+
+    <TextView
+        style="@style/EditorFieldHint"
+        android:layout_marginTop="@dimen/space_xs"
+        android:text="@string/editor_duration_ms" />
+</LinearLayout>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  无障碍服务配置。
+
+  事件订阅收敛到最小：只留 typeWindowStateChanged（系统建连所需的最小集），
+  不订 typeWindowContentChanged / typeAllMask。本服务不读屏、不监听窗口内容，
+  因此除建连外几乎不会收到事件回调，省去无谓开销。
+  若后续需要控件点击，再打开 typeWindowContentChanged 并实现 onAccessibilityEvent。
+-->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeWindowStateChanged"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagDefault|flagRequestFilterKeyEvents"
+    android:canPerformGestures="true"
+    android:canRequestFilterKeyEvents="true"
+    android:canRetrieveWindowContent="false"
+    android:description="@string/a11y_service_description"
+    android:notificationTimeout="100"
+    android:settingsActivity="com.auto.fairy.MainActivity" />

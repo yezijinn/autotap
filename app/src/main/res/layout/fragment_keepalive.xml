@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/window_background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/space_l">
+
+        <!-- 期望校准：明确告知无 100% 保活 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/space_m"
+            android:background="@drawable/bg_guide"
+            android:lineSpacingExtra="3dp"
+            android:padding="@dimen/space_m"
+            android:text="@string/keepalive_notice"
+            android:textColor="@color/guide_text"
+            android:textSize="12sp" />
+
+        <!-- 权限检查 -->
+        <TextView
+            style="@style/TextSectionTitle"
+            android:text="@string/keepalive_section_permissions" />
+
+        <LinearLayout style="@style/CardStyle">
+
+            <LinearLayout style="@style/RowHorizontal">
+
+                <TextView
+                    android:id="@+id/text_a11y_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/keepalive_a11y"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/text_a11y_status"
+                        style="@style/RowHint" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btn_a11y"
+                    style="@style/TextActionButton"
+                    android:text="@string/keepalive_go" />
+            </LinearLayout>
+
+            <View style="@style/RowDivider" />
+
+            <LinearLayout style="@style/RowHorizontal">
+
+                <TextView
+                    android:id="@+id/text_overlay_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/keepalive_overlay"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/text_overlay_status"
+                        style="@style/RowHint" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btn_overlay"
+                    style="@style/TextActionButton"
+                    android:text="@string/keepalive_go" />
+            </LinearLayout>
+
+            <View style="@style/RowDivider" />
+
+            <LinearLayout style="@style/RowHorizontal">
+
+                <TextView
+                    android:id="@+id/text_battery_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/keepalive_battery"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/text_battery_status"
+                        style="@style/RowHint" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btn_battery"
+                    style="@style/TextActionButton"
+                    android:text="@string/keepalive_go" />
+            </LinearLayout>
+
+            <View style="@style/RowDivider" />
+
+            <LinearLayout style="@style/RowHorizontal">
+
+                <TextView
+                    android:id="@+id/text_background_icon"
+                    android:layout_width="20dp"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:textSize="16sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/space_s"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/keepalive_background"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/text_background_status"
+                        style="@style/RowHint" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/btn_background"
+                    style="@style/TextActionButton"
+                    android:text="@string/keepalive_go" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 闊抽噺閿紑鍏?-->
+        <TextView
+            style="@style/TextSectionTitle"
+            android:text="@string/keepalive_section_volume" />
+
+        <LinearLayout style="@style/CardStyle">
+
+            <LinearLayout style="@style/RowHorizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/keepalive_volume_switch"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp" />
+
+                <androidx.appcompat.widget.SwitchCompat
+                    android:id="@+id/switch_volume_key"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/space_s"
+                android:text="@string/keepalive_volume_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+        </LinearLayout>
+
+        <!-- 鍘傚璁剧疆姝ラ -->
+        <TextView
+            android:id="@+id/text_rom_title"
+            style="@style/TextSectionTitle" />
+
+        <LinearLayout style="@style/CardStyle">
+
+            <TextView
+                android:id="@+id/text_rom_steps"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingExtra="6dp"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
+

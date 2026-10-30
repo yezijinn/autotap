@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 浮层列表单行：状态点 + 脚本名 + 循环·步数 + 播放/编辑/更多 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/row_card"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/space_xs"
+    android:background="@drawable/bg_card"
+    android:paddingStart="@dimen/space_s"
+    android:paddingTop="@dimen/space_s"
+    android:paddingBottom="@dimen/space_s"
+    android:paddingEnd="@dimen/space_xs">
+
+    <LinearLayout style="@style/RowHorizontal">
+
+        <!-- 状态点（播放/暂停/出错时显示） -->
+        <View
+            android:id="@+id/row_status"
+            android:layout_width="@dimen/status_dot"
+            android:layout_height="@dimen/status_dot"
+            android:layout_marginEnd="@dimen/space_s"
+            android:background="@drawable/bg_status_dot"
+            android:visibility="gone" />
+
+        <!-- 名称 + 循环·步数 -->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/row_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                tools:text="每日签到" />
+
+            <TextView
+                android:id="@+id/row_meta"
+                style="@style/RowHint"
+                tools:text="∞ · 8 步" />
+        </LinearLayout>
+
+        <!-- 播放 / 编辑 / 更多：中文文字 -->
+        <TextView
+            android:id="@+id/row_activate"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/menu_activate"
+            android:text="@string/menu_activate"
+            android:paddingStart="@dimen/space_s"
+            android:paddingEnd="@dimen/space_s" />
+
+        <TextView
+            android:id="@+id/row_edit"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/menu_edit"
+            android:text="@string/menu_edit"
+            android:paddingStart="@dimen/space_s"
+            android:paddingEnd="@dimen/space_s" />
+
+        <TextView
+            android:id="@+id/row_more"
+            style="@style/AppbarTextButton"
+            android:contentDescription="@string/overlay_more"
+            android:text="@string/overlay_more"
+            android:textColor="@color/text_secondary"
+            android:paddingStart="@dimen/space_s"
+            android:paddingEnd="@dimen/space_s" />
+    </LinearLayout>
+</FrameLayout>

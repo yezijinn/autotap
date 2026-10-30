@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 编辑器头部：循环次数与默认动作延迟各一个编辑框，标签与单位同行紧凑排列 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingTop="@dimen/space_l">
+
+    <!-- 脚本循环次数：0 = 无限 -->
+    <LinearLayout
+        android:id="@+id/card_loop"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_card"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_l"
+        android:paddingTop="@dimen/space_s"
+        android:paddingBottom="@dimen/space_s">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/editor_loop_title"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary" />
+
+        <EditText
+            android:id="@+id/edit_loop_times"
+            style="@style/NumberField"
+            android:layout_width="72dp"
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_s"
+            android:text="@string/editor_loop_zero_infinite"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+    </LinearLayout>
+
+    <!-- 默认动作延迟：新建步骤时预填 -->
+    <LinearLayout
+        android:id="@+id/card_delay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="@dimen/space_s"
+        android:background="@drawable/bg_card"
+        android:paddingStart="@dimen/space_l"
+        android:paddingEnd="@dimen/space_l"
+        android:paddingTop="@dimen/space_s"
+        android:paddingBottom="@dimen/space_s">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/editor_default_delay_title"
+            android:textSize="14sp"
+            android:textColor="@color/text_primary" />
+
+        <EditText
+            android:id="@+id/edit_default_delay"
+            style="@style/NumberField"
+            android:layout_width="88dp"
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/space_s"
+            android:text="@string/editor_default_delay_zero"
+            android:textSize="12sp"
+            android:textColor="@color/text_secondary" />
+    </LinearLayout>
+
+    <!-- 屏幕分辨率：坐标换算的基准，只读展示 -->
+    <TextView
+        android:id="@+id/text_header_screen"
+        style="@style/EditorFieldHint"
+        android:layout_marginTop="@dimen/space_xs"
+        android:layout_marginStart="@dimen/space_s" />
+
+    <!-- 步骤列表标题 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/space_l"
+        android:layout_marginBottom="@dimen/space_s"
+        android:text="@string/editor_steps_title"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_primary" />
+</LinearLayout>

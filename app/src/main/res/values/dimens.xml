@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 圆角 -->
+    <dimen name="corner_card">12dp</dimen>
+    <dimen name="corner_panel">16dp</dimen>
+    <dimen name="corner_fab">28dp</dimen>
+    <dimen name="corner_chip">8dp</dimen>
+
+    <!-- 间距网格 -->
+    <dimen name="space_xs">4dp</dimen>
+    <dimen name="space_s">8dp</dimen>
+    <dimen name="space_m">12dp</dimen>
+    <dimen name="space_l">16dp</dimen>
+    <dimen name="space_xl">24dp</dimen>
+
+    <!-- 组件尺寸 -->
+    <dimen name="appbar_height">56dp</dimen>
+    <dimen name="touch_target">44dp</dimen>
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="status_dot">10dp</dimen>
+
+    <dimen name="picker_ring_radius">26dp</dimen>
+
+    <!-- 浮层 -->
+    <dimen name="overlay_list_max_w">340dp</dimen>        <!-- 列表浮层最大宽（实际宽=90% 屏宽） -->
+    <dimen name="overlay_list_header_h">28dp</dimen>      <!-- 列表浮层标题条高度 -->
+    <dimen name="overlay_icon_pad">3dp</dimen>            <!-- 按钮图标内边距 -->
+    <dimen name="overlay_btn_size">32dp</dimen>           <!-- 迷你条五键靶面（比列表按钮更紧，仍留可点余量） -->
+
+    <!-- 坐标标记层 -->
+    <dimen name="marker_radius">4.8dp</dimen>   <!-- 圆点半径（较 6dp 缩小 20%），直径 9.6dp -->
+    <dimen name="marker_label">10sp</dimen>   <!-- 步骤数字字号 -->
+    <dimen name="marker_hit">20dp</dimen>     <!-- 拖动命中半径 -->
+</resources>

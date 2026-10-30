@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 自适应图标背景层：蓝 → 青单向渐变，加一层左上柔光提亮；
+     铺满 108x108，圆角与裁剪交给启动器遮罩 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- 主渐变：左上深蓝 → 右下青 -->
+    <path android:pathData="M0,0h108v108h-108Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="linear"
+                android:startX="6"
+                android:startY="0"
+                android:endX="102"
+                android:endY="108">
+                <item
+                    android:offset="0"
+                    android:color="#FF2F6FED" />
+                <item
+                    android:offset="0.52"
+                    android:color="#FF2E93E6" />
+                <item
+                    android:offset="1"
+                    android:color="#FF2BB6C4" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- 左上柔光，做出球面感，小尺寸不显脏 -->
+    <path android:pathData="M0,0h108v108h-108Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="28"
+                android:centerY="16"
+                android:gradientRadius="88">
+                <item
+                    android:offset="0"
+                    android:color="#2EFFFFFF" />
+                <item
+                    android:offset="0.55"
+                    android:color="#0DFFFFFF" />
+                <item
+                    android:offset="1"
+                    android:color="#00FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

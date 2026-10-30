@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginBottom="@dimen/space_m">
+
+    <!-- 归一化 + 像素 双行显示 -->
+    <TextView
+        android:id="@+id/text_coord_norm"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="13sp"
+        android:textColor="@color/text_primary"
+        tools:text="归一化 0.50, 0.75" />
+
+    <TextView
+        android:id="@+id/text_coord_px"
+        style="@style/RowHint"
+        tools:text="像素 540 × 1920" />
+
+    <TextView
+        android:id="@+id/btn_pick_coord"
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/touch_target"
+        android:gravity="center"
+        android:layout_marginTop="@dimen/space_xs"
+        android:text="@string/editor_pick_coord"
+        android:textSize="14sp"
+        android:textColor="@color/brand_primary"
+        android:drawableStart="@drawable/ic_pick_coord"
+        android:drawablePadding="@dimen/space_xs"
+        android:background="@drawable/bg_chip"
+        android:paddingStart="@dimen/space_m"
+        android:paddingEnd="@dimen/space_m" />
+</LinearLayout>

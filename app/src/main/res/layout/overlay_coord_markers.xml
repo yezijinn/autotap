@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 坐标标记层：全屏透明容器 + 自定义绘制 View。
+     标记层恒为只读（FLAG_NOT_TOUCHABLE），否则满屏窗口会吃掉所有点击；
+     可拖动时由控制器为每个圆点单独挂小触摸窗。 -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/markers_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@android:color/transparent">
+
+    <com.auto.fairy.overlay.CoordinateMarkers
+        android:id="@+id/markers_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</FrameLayout>

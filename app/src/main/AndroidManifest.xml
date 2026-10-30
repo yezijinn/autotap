@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- 检查更新需要联网 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 悬浮窗（播放控制面板）必需 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <!-- 播放期间持锁，避免 Doze 挂起导致漏点；停止即释放 -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- 保活引导页拉起「忽略电池优化」系统弹窗 -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <!--
+      后台提示要能看见：本应用的操作面全是悬浮窗，多数场景下自己没有 Activity 在前台，
+      而 targetSdk 34 起「后台 + 未授予通知权限」的吐司会被系统静默丢弃。
+      这里只是让用户有一次授予机会（拒绝后诊断页仍有记录）。
+    -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:name=".AutoFairyApp"
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AutoFairy">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- 脚本编辑器：Dialog 主题浮层（宽 90% 高 70% 由窗口参数设），
+             便于与录制/播放浮层隔离生命周期 -->
+        <activity
+            android:name=".editor.ScriptEditorActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"
+            android:theme="@style/Theme.AutoFairy.EditorDialog"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- 诊断 / 保活 / 设置 浮层容器：透明底 + 90%×70% 卡片 -->
+        <activity
+            android:name=".PanelActivity"
+            android:exported="false"
+            android:theme="@style/Theme.AutoFairy.SheetDialog"
+            android:windowSoftInputMode="adjustResize" />
+
+        <service
+            android:name=".AutoFairyAccessibilityService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+    </application>
+
+</manifest>

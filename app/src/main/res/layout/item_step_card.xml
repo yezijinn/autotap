@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 步骤卡片：序号(纯数字) · 类型 · 坐标/时长摘要 + 右侧三个图标按钮(上移/下移/删除) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/card_step"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/space_m"
+    android:background="@drawable/bg_card"
+    android:paddingStart="@dimen/space_l"
+    android:paddingTop="@dimen/space_m"
+    android:paddingBottom="@dimen/space_m"
+    android:paddingEnd="@dimen/space_s">
+
+    <LinearLayout style="@style/RowHorizontal">
+
+        <!-- 步骤序号：纯数字，无底色无圆点 -->
+        <TextView
+            android:id="@+id/text_step_index"
+            android:layout_width="20dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:textColor="@color/brand_primary"
+            tools:text="1" />
+
+        <!-- 摘要（点击整卡编辑） -->
+        <LinearLayout
+            android:id="@+id/text_step_summary_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="@dimen/space_s">
+
+            <TextView
+                android:id="@+id/text_step_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                tools:text="点击" />
+
+            <TextView
+                android:id="@+id/text_step_sub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                tools:text="(734,1368) 60ms 50ms 1" />
+        </LinearLayout>
+
+        <!-- 上移：向上箭头 -->
+        <ImageView
+            android:id="@+id/btn_step_up"
+            android:layout_width="@dimen/overlay_btn_size"
+            android:layout_height="@dimen/overlay_btn_size"
+            android:contentDescription="@string/editor_move_up"
+            android:scaleType="centerInside"
+            android:padding="@dimen/overlay_icon_pad"
+            android:src="@drawable/ic_arrow_up"
+            android:tint="@color/text_secondary" />
+
+        <!-- 下移：向下箭头 -->
+        <ImageView
+            android:id="@+id/btn_step_down"
+            android:layout_width="@dimen/overlay_btn_size"
+            android:layout_height="@dimen/overlay_btn_size"
+            android:contentDescription="@string/editor_move_down"
+            android:scaleType="centerInside"
+            android:padding="@dimen/overlay_icon_pad"
+            android:src="@drawable/ic_arrow_down"
+            android:tint="@color/text_secondary" />
+
+        <!-- 删除：叉号 -->
+        <ImageView
+            android:id="@+id/btn_step_delete"
+            android:layout_width="@dimen/overlay_btn_size"
+            android:layout_height="@dimen/overlay_btn_size"
+            android:contentDescription="@string/editor_delete_step"
+            android:scaleType="centerInside"
+            android:padding="@dimen/overlay_icon_pad"
+            android:src="@drawable/ic_close"
+            android:tint="@color/status_error" />
+    </LinearLayout>
+</FrameLayout>
