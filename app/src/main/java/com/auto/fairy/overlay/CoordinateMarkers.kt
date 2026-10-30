@@ -443,7 +443,9 @@ class CoordinateMarkers @JvmOverloads constructor(
             val ay = if (dragging) dragY else entry.point.y * screenH
             val cx = ax - ox
             val cy = ay - oy
-            val active = !dragging && activeOrdinal > 0 && entry.ordinal == activeOrdinal
+            // 滑动步骤的起点 / 终点十字保持原样：执行中不加粗、不加长，只有箭头动
+            val swipePoint = entry.path is MarkerPath.Swipe
+            val active = !dragging && !swipePoint && activeOrdinal > 0 && entry.ordinal == activeOrdinal
             drawCross(canvas, cx, cy, active)
             // 滑动起点（Swipe 的第 0 点）数字加粗 10%，与终点区分
             val startBold = entry.path is MarkerPath.Swipe && entry.path.point == 0
