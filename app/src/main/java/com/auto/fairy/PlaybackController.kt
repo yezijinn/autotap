@@ -664,7 +664,15 @@ object PlaybackController {
             // 旧片未派发的笔画一并作废，否则新回放已在跑、旧坐标还在点。
             backend.requestAbort(dropPending = true)
             Thread({
-                eng.awaitIdle(2_000L)
+                if (!eng.awaitIdle(2_000L)) {
+                    // 旧线程 2s 还没退：硬起新线程会和它抢注入（同一 Service 单实例），
+                    // 报错比「两条时间轴同时点」安全。
+                    handler.post {
+                        if (playToken.get() != token) return@post
+                        notifyError("上一次回放未退出，请稍后重试")
+                    }
+                    return@Thread
+                }
                 handler.post {
                     // 等待期间可能来了新的播放或一次停止：只认自己那一代。
                     // 否则「点了停止它却自己跑起来」，或是两次播放都以「启动失败」收场。

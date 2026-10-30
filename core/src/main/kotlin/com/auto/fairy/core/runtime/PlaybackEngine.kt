@@ -61,6 +61,9 @@ class PlaybackEngine(private val backend: InputBackend) {
     private var pauseRequested = false
 
     @Volatile
+    private var pauseReqNs = 0L
+
+    @Volatile
     private var wakeRequested = false
 
     @Volatile
@@ -129,6 +132,7 @@ class PlaybackEngine(private val backend: InputBackend) {
         lastError = null
         stopRequested = false
         pauseRequested = false
+        pauseReqNs = 0L
         wakeRequested = false
         commands.clear()
         val limit = if (loopTimes <= 0) 0 else loopTimes
@@ -161,6 +165,9 @@ class PlaybackEngine(private val backend: InputBackend) {
 
     fun pause(): Boolean {
         if (!active.get()) return false
+        // 冻结起点取请求时刻，不是命令被消费的时刻：本片还要跑完（长手势最长 600ms 宽限），
+        // 这段按旧写法算成正常播放，时间轴会永久少一段（实测 3s 长按暂停少 601ms）。
+        pauseReqNs = System.nanoTime()
         commands.add(Command.Pause)
         wake()
         return true
@@ -314,7 +321,9 @@ class PlaybackEngine(private val backend: InputBackend) {
     /** 返回暂停时长（纳秒）；<0 表示期间收到停止/代次变更。 */
     private fun waitWhilePaused(token: Long): Long {
         state = State.PAUSED
-        val pauseStartNs = System.nanoTime()
+        // 从**请求时刻**起算：本片可能在请求之后还要跑几百毫秒才收尾，
+        // 那段时间同样属于冻结区间，不能算成在播放。
+        val pauseStartNs = if (pauseReqNs != 0L) pauseReqNs else System.nanoTime()
         while (true) {
             drain()
             if (runToken != token || stopRequested) return -1L
@@ -322,6 +331,7 @@ class PlaybackEngine(private val backend: InputBackend) {
             LockSupport.park()
         }
         state = State.RUNNING
+        pauseReqNs = 0L
         return System.nanoTime() - pauseStartNs
     }
 

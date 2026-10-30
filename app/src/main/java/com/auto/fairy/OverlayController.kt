@@ -232,10 +232,10 @@ object OverlayController {
     fun hide() {
         val view = binding
         val wasAdded = added
-        // 先清记账再撤窗：removeView 会同步走一遍 detach 回调，那里又会调回 hide()，
-        // 先清掉才能让重入的那次直接空转（否则同一条窗口被 removeView 两次）
+        // removeView 会同步走一遍 detach，那里又会调回 hide()。detach 依赖 binding.root
+        // 认窗，所以必须**先 removeView、再清 binding**：先清的话守卫恒真、stop 永不执行
+        // （窗没了而回放照跑，实测 20/20 笔全打出去）。
         added = false
-        binding = null
         OverlayQuickAdd.close()
         PlaybackController.removeListener(playbackListener)
         appContext?.let { AutoFairyApp.of(it).repository.removeListener(repositoryListener) }
@@ -243,6 +243,7 @@ object OverlayController {
         if (view != null && wasAdded) {
             runCatching { windowManager?.removeView(view.root) }
         }
+        binding = null
         params = null
         cachedNameId = null
         cachedName = null

@@ -56,8 +56,8 @@ import kotlin.coroutines.suspendCoroutine
  *   主动结束本片，保证即使回调全丢，暂停/停止也能在宽限内生效。停止
  *   （`dropPending = true`）会把本片还没派发的笔画**当场作废**；暂停只收片、不丢笔画
  *   （时间轴是冻结而非跳过，丢了这一笔等于用户脚本少点一下）。停止还会**当场作废在途手势**
- *   （见 [cancelInFlightGesture]）：派发一个零笔画手势，系统按「新派发取消旧手势」处理，
- *   屏幕立刻停住且不额外注入任何事件——否则 12s 的滑动在按下停止后还会继续滑满。
+ *   （见 [cancelInFlightGesture]）：派发一笔落在屏幕外的 1ms 手势，系统按「新派发取消旧手势」处理，
+ *   目标只收到 CANCEL、收不到任何 DOWN/UP，否则 12s 的滑动在按下停止后还会继续滑满。
  *   暂停不碰在途手势（冻结时间轴，这一笔仍要完整走完）。
  *   真实触摸无论落在哪个窗口（含自家迷你条，第十七轮两次实测）目标都会收到 CANCEL；
  *   `adb shell input` 注入的点击只有落在目标窗口内才截断那一笔，落在自家浮层时目标停在
@@ -260,13 +260,23 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
     /**
      * 作废在途注入手势。
      *
-     * 系统对 `dispatchGesture` 的语义是「新派发先取消在途手势」，这里派发一个**零笔画**
-     * 的手势：只触发取消，不给屏幕注入任何 DOWN/UP。补发一次触摸或 UP 可能点中目标
-     * 应用（等于替用户多点一下），代价远大于收益，所以只走取消、不补事件。
+     * 系统对 `dispatchGesture` 的语义是「新派发先取消在途手势」，所以派发一笔
+     * **落在屏幕外**的 1ms 手势：只触发取消，`InputDispatcher` 因为没有可触摸窗口
+     * 直接丢弃它，目标收不到任何 DOWN/UP（实测取消耗时 290~614µs，目标只收到 CANCEL）。
+     *
+     * 零笔画不行：`Builder.build()` 要求至少一笔，API 32 实测抛
+     * `Gestures must have at least one stroke`，取消从未发生——停止后长按会继续按满。
+     * 落点取屏内会补一次 1ms 点击（目标同毫秒收到 DOWN+UP），等于替用户点了屏幕。
      */
     private fun cancelInFlightGesture() {
+        val screen = ScreenMetrics.screenInfo(service)
+        val path = Path()
+        path.moveTo(screen.w + 600f, screen.h + 600f)
+        val gesture = GestureDescription.Builder()
+            .addStroke(GestureDescription.StrokeDescription(path, 0L, 1L))
+            .build()
         try {
-            service.dispatchGesture(GestureDescription.Builder().build(), null, null)
+            service.dispatchGesture(gesture, null, null)
         } catch (t: Throwable) {
             Log.w(TAG, "取消在途手势失败", t)
         }
