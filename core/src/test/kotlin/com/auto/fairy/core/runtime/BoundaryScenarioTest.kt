@@ -95,8 +95,14 @@ class BoundaryScenarioTest {
         assertTrue(engine.awaitIdle(10_000L))
         val records = backend.strokeRecords()
         assertEquals(12, records.size)
-        // 记录里的 startMs 是**片内相对值**（首条恒为 0）
-        assertEquals((0 until 12).map { it * 2L }, records.map { it.strokeStartMs })
+        // startMs 是**片内相对值**，超过批次上限时会切片，因此按绝对计划时刻折算：
+        // 12 笔相对首笔的计划偏移必须与展开顺序逐一对应（步距 2ms）
+        val base = records.first().expectedNs
+        assertEquals(
+            (0 until 12).map { it * 2L },
+            records.map { (it.expectedNs - base) / 1_000_000L },
+        )
+        assertEquals((0 until 12).toList(), records.map { it.ordinal })
     }
 
     /**

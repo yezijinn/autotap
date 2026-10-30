@@ -4,6 +4,7 @@ import com.auto.fairy.core.compiler.CompiledStroke
 import com.auto.fairy.core.compiler.ScriptCompiler
 import com.auto.fairy.core.compiler.Timeline
 import com.auto.fairy.core.inject.Caps
+import com.auto.fairy.core.model.MAX_STROKES_PER_BATCH
 import com.auto.fairy.core.model.Point
 import com.auto.fairy.core.model.Script
 import com.auto.fairy.core.model.ScreenInfo
@@ -39,16 +40,22 @@ class SchedulerTest {
         assertEquals(1_000L, schedule.steady.durationMs)
     }
 
+    /** 批次上限取常量，避免测试把数值抄死（上限改动时这里跟着走）。 */
+    private val cap = MAX_STROKES_PER_BATCH
+
     @Test
-    fun `每批不超过 20 条 stroke`() {
+    fun `每批不超过批次上限条 stroke`() {
         val timeline = compile(Step.Loop(30, listOf(tap())))
         val schedule = Scheduler(Caps()).schedule(timeline)
 
-        assertEquals(2, schedule.first.slices.size)
-        assertEquals(20, schedule.first.slices[0].strokeCount)
-        assertEquals(10, schedule.first.slices[1].strokeCount)
-        assertTrue(schedule.first.slices.all { it.strokeCount <= 20 })
-        assertTrue(schedule.first.slices.all { it.strokes.size <= 20 })
+        // 30 条按上限切分：10 → 3 片，20 → 2 片，数值随 cap 变
+        val full = 30 / cap
+        val rest = 30 % cap
+        val slices = schedule.first.slices
+        assertEquals(if (rest == 0) full else full + 1, slices.size)
+        assertTrue("每片都不超过 $cap", slices.all { it.strokeCount <= cap })
+        assertTrue(slices.all { it.strokes.size <= cap })
+        assertEquals(cap, slices[0].strokeCount)
     }
 
     @Test
@@ -95,15 +102,16 @@ class SchedulerTest {
 
     @Test
     fun `片计划跨度不含片内后移量`() {
-        // 20 拍 10ms 长按、pd=0：计划跨度 200ms 落进一片；后端按起点间隔下限串行派发后
-        // 真实跨度 960ms（见 GestureBatchingTest）。这个差值就是 A11yBackend 的暂停/停止
+        // 10 拍 10ms 长按、pd=0：计划跨度 100ms 落进一片；后端按起点间隔下限串行派发后
+        // 真实跨度 460ms（见 GestureBatchingTest）。这个差值就是 A11yBackend 的暂停/停止
         // 宽限必须按「最后一笔派发时刻」起算的原因。
-        val timeline = compile(Step.Loop(20, listOf(tap(durationMs = 10L))))
+        val beats = cap
+        val timeline = compile(Step.Loop(beats, listOf(tap(durationMs = 10L))))
         val plan = Scheduler(Caps(maxSliceMs = 400L)).schedule(timeline).first
 
         assertEquals(1, plan.slices.size)
-        assertEquals(20, plan.slices[0].strokeCount)
-        assertEquals(200L, plan.slices[0].durationMs)
+        assertEquals(beats, plan.slices[0].strokeCount)
+        assertEquals(beats * 10L, plan.slices[0].durationMs)
     }
 
     @Test
@@ -126,11 +134,14 @@ class SchedulerTest {
         val steps = ArrayList<Step>()
         repeat(7) { steps.add(multi(fingers = 3)) }
         val schedule = Scheduler(Caps()).schedule(compile(*steps.toTypedArray()))
+        val slices = schedule.first.slices
 
-        assertEquals(2, schedule.first.slices.size)
-        assertEquals(18, schedule.first.slices[0].strokeCount) // 6 个三指手势
-        assertEquals(3, schedule.first.slices[1].strokeCount)
-        assertTrue(schedule.first.slices.all { it.strokeCount <= 20 })
+        // 7 个三指手势共 21 指，按上限切：整片能装 floor(cap/3) 个手势
+        val perSlice = cap / 3
+        val total = slices.sumOf { it.strokeCount }
+        assertEquals(21, total)
+        assertTrue("每片都不超过 $cap", slices.all { it.strokeCount <= cap })
+        assertEquals(perSlice * 3, slices[0].strokeCount)
     }
 
     @Test
