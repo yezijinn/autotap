@@ -1,6 +1,5 @@
 *.iml
 .gradle/
-.agent-workflow/
 /local.properties
 /.idea/
 .DS_Store

@@ -146,7 +146,7 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
     private var tailDispatchNs = 0L
 
     /**
-    * 本轮回放起步时的真实屏幕尺寸。
+    * 本次回放起步时的真实屏幕尺寸。
     *
     * 归一化坐标只在「同一块屏幕」上成立：播放途中屏幕被换掉（横竖屏切换会由
     * 前台应用强制触发，例如打开本应用的编辑器），同一个归一化点会落到别处。
@@ -160,7 +160,7 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
     private var screenAtStart: ScreenInfo? = null
 
     override suspend fun prepare(): Result<Unit> {
-        // 新一轮回放：上一轮残留的长按时长不能拿来当本轮的起点间隔（否则首个点击被推迟）
+        // 新一次回放：上次残留的长按时长不能拿来当本次的起点间隔（否则首个点击被推迟）
         lastPressStartMs = 0L
         lastPressDurationMs = 0L
         dropped = false

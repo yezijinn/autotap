@@ -202,7 +202,7 @@ class PlaybackEngineTest {
     @Test
     fun `巡数在迭代边界推进`() {
         // 每轮以 200ms 等待开头：界面「第 N 巡」必须在边界就切换，
-        // 而不是等本轮第一笔派发（否则前摇期间读数停在上一巡）。
+        // 而不是等这一轮第一笔派发（否则前摇期间读数停在上一巡）。
         val backend = FakeBackend()
         val engine = PlaybackEngine(backend)
         val timeline = compile(listOf(Step.Wait(200L), Step.Tap(listOf(Point(0.5f, 0.5f)), 5L)))

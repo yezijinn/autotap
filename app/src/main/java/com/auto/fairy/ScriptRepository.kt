@@ -74,7 +74,7 @@ class ScriptRepository(context: Context) {
         }
         // 目录里存在但索引没记录的文件（例如手动拷入）：补到末尾，读取时自动接管。
         // 过滤放在排序之前：sortedByDescending 的比较器每次比较都要 stat（lastModified），
-        // 已登记的文件本就要跳过，让它们参与 N log N 次 stat 是白付的。
+        // 跳过名单里的文件本就要跳过，让它们参与 N log N 次 stat 是白付的。
         val known = kept.toHashSet()
         val extras = dir.listFiles { f ->
             f.isFile && f.extension == "json" && f.nameWithoutExtension !in known

@@ -160,7 +160,7 @@ class MainActivity : AppCompatActivity() {
      * 按压 30/110/230ms 三档实测停止均 10/10，不受影响。
      *
      * 要挡的是实测到的这条：播放中回主页，注入点击能命中卡片的 激活/编辑/导出/删除、
-     * FAB 与顶栏四个 tab（逐点命中，见本轮报告）；其中「导出」会把系统「保存到」选择器
+     * FAB 与顶栏四个 tab（逐点命中）；其中「导出」会把系统「保存到」选择器
      * 拉到仍在运行的回放前面——那个窗口不是我们的，没有闸门可加。
      */
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {

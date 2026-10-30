@@ -67,7 +67,7 @@ class LoopAndControlTest {
         assertEquals(12, records.size)
         val perCycle = records.groupBy { it.cycle }
         assertEquals(setOf(0L, 1L, 2L), perCycle.keys)
-        // 每轮的 4 笔相对本轮起点的偏移固定：0 / 100 / 200 / 300
+        // 每轮的 4 笔相对该轮起点的偏移固定：0 / 100 / 200 / 300
         for ((_, list) in perCycle) {
             val base = list.first().expectedNs
             val offsets = list.map { (it.expectedNs - base) / 1_000_000L }

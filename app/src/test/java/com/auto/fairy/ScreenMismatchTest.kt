@@ -27,7 +27,7 @@ class ScreenMismatchTest {
         assertNull(check(1440, 3200, 1440, 3040))
     }
 
-    /** 竖屏录、横屏放：必须拒绝（本轮实测到的真实错位）。 */
+    /** 竖屏录、横屏放：必须拒绝（实测到的真实错位）。 */
     @Test
     fun portraitScriptOnLandscapeRejected() {
         assertNotNull(check(1440, 3200, 3200, 1440))

@@ -362,7 +362,7 @@ class PlaybackEngine(private val backend: InputBackend) {
         @Volatile
         private var waiter: Thread? = null
 
-        /** 本轮等待的令牌；比较用的是对象身份，因此不会被下一轮复用。 */
+        /** 本次等待的令牌；比较用的是对象身份，因此不会被下一轮复用。 */
         private var session: Any? = null
 
         /** 令牌校验与结果写入必须原子：否则「旧回调通过校验」与「新一轮重置状态」交错会串结果。 */
@@ -381,7 +381,7 @@ class PlaybackEngine(private val backend: InputBackend) {
 
                 override fun resumeWith(result: Result<Result<Unit>>) {
                     val accepted = synchronized(lock) {
-                        // 本轮等待已被中断放弃：迟到的回调不能污染下一次调用
+                        // 本次等待已被中断放弃：迟到的回调不能污染下一次调用
                         if (session !== mine) return@synchronized false
                         outcome = result.getOrNull()
                             ?: Result.failure(

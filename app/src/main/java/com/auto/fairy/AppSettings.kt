@@ -35,7 +35,7 @@ object AppSettings {
         prefs(context).edit().putBoolean(KEY_VOLUME_KEY, enabled).apply()
     }
 
-    /** 悬浮窗松手后贴边；默认关闭——用户要求小窗可自由拖到任意位置。 */
+    /** 悬浮窗松手后贴边；默认关闭——小窗可自由拖到任意位置。 */
     fun isSnapEdgeEnabled(context: Context): Boolean =
         prefs(context).getBoolean(KEY_SNAP_EDGE, false)
 
