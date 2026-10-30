@@ -875,7 +875,10 @@ object PlaybackController {
         if (current == PlaybackEngine.State.IDLE && engine?.isRunning != true) {
             releaseWakeLock()
             stopRequested = false
-            CoordinateMarkersController.setPlaybackActive(false)
+            // 起播闸门开着（撤窗 → 等窗口事务 → 提交 Start 之间）不要补回圆点窗：
+            // 起播那刻会再撤一次，撤窗与首笔只隔几十毫秒，InputDispatcher 直接丢弃
+            // 整串手势（实测 78 次起播丢 28 次首击，加这道守卫后 80 次 0 丢）。
+            if (startGate == null) CoordinateMarkersController.setPlaybackActive(false)
         }
         syncStepTicker()
         // 听众里全是「重读状态 + 重读仓库」的活：坐标层每条通知 load+解析整份脚本，
