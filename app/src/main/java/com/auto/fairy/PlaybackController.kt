@@ -174,6 +174,12 @@ object PlaybackController {
             return engine?.takeIf { it.isRunning }?.playbackState ?: PlaybackEngine.State.IDLE
         }
 
+    /**
+     * 是否正在跑（RUNNING）。坐标层画箭头动画时据此决定是否续帧：
+     * 暂停/停止时箭头必须立刻消失，因此续帧只在 RUNNING 下成立。
+     */
+    fun isPlaying(): Boolean = state == PlaybackEngine.State.RUNNING
+
     /** 正在播放（或刚播放完）的脚本；未运行过时为 null。删除确认等「是否在跑这条」用它。 */
     val playingScriptId: String? get() = currentScriptId
 
@@ -331,6 +337,59 @@ object PlaybackController {
         }
         return elapsed % cyclePeriodMs
     }
+
+    /** 当前一轮内的时间偏移（含暂停扣除）；对外暴露给坐标层算箭头进度用。 */
+    private fun currentCycleOffset(): Long =
+        if (stepEnds.isEmpty()) 0L else cycleOffset(currentOffsetRaw())
+
+    /** 与 [currentOffset] 同口径，但不做再次取模（保留跨轮累计，便于按绝对 ms 定位步骤）。 */
+    private fun currentOffsetRaw(): Long {
+        val reference = if (state == PlaybackEngine.State.PAUSED && pausedAtNs > 0L) {
+            pausedAtNs
+        } else {
+            System.nanoTime()
+        }
+        return (reference - startedAtNs - (engine?.pausedNanos() ?: 0L)).coerceAtLeast(0L) / 1_000_000L
+    }
+
+    /**
+     * 当前正执行的 [ordinal] 步这一遍**在时间轴里的起始偏移（ms）**。
+     *
+     * 与 [indexSteps] 同一展开口径（含 repeat 与循环）：坐标层画箭头进度时，
+     * 用 [cursorElapsedMs] 减去这个值即得该步本遍已走多久，再除以 durationMs 即 [0,1] 进度。
+     *
+     * 必须返回「当前这一遍」的起点，而不是该 ordinal 第一次出现的起点——
+     * 步骤自身 [Step.repeat] > 1 时，同一步会在时间轴上占多个窗口（如 ordinal=2 在
+     * 300ms、600ms 各走一遍），若每遍都取首遍 300ms，则第二遍会把已过去 600+ms
+     * 误算成「已走 300ms 多」→ 进度瞬间越界、箭头提前到终点 / 直接不显示。这里
+     * 用与 [cursorStepIndex] 完全同口径的扫描（同一 offset、同一边界）取「当前窗口」起点。
+     *
+     * 取不到（未播放 / 序号越界 / 已越出最后一步）返回 0。
+     */
+    fun stepOffsetMs(ordinal: Int): Long {
+        if (stepEnds.isEmpty() || ordinal <= 0) return 0L
+        val offset = currentOffset()
+        // 找到「包含当前 offset 的窗口」或「已越过最后一步时取最后一步」；
+        // 与 cursorStepIndex 同样先按 stepEnds 找首个 > offset 的边界。
+        val boundaryIdx = stepEnds.indexOfFirst { it > offset }
+        val resolvedIdx = if (boundaryIdx >= 0) boundaryIdx else stepEnds.lastIndex
+        val ord = stepOrdinals.getOrElse(resolvedIdx) { 0 }
+        // 当前窗口未必是 ordinal 这一步（可能还在前一步的尾巴上），
+        // 但箭头只在 setActiveOrdinal(ordinal) 被调用时才有意义，那时 ordinal 就是当前步，
+        // 直接取该窗口起点即可；边界外或序数对不上返回 0（让进度从 0 起步，不出负数）。
+        if (ord != ordinal) return 0L
+        return if (resolvedIdx == 0) 0L else stepEnds[resolvedIdx - 1]
+    }
+
+    /**
+     * 播放开始至今已过去多少毫秒（含暂停扣除、跨轮累计），与 [stepOffsetMs] 同一时间轴。
+     * 坐标层据此把箭头进度对齐到 [0,1]；未播放时返回 0。
+     *
+     * 这是「绝对播放时钟」（pause 时冻结、跨轮累计），箭头进度 = (本值 - 该步起点) / 时长，
+     * 因此暂停时读数停住、恢复后接着走、循环到下一轮从头开始——与需求「速度由时长决定」
+     * 以及「暂停/停止立刻消失」完全对齐（箭头窗口由播放状态而非墙钟控制）。
+     */
+    fun cursorElapsedMs(): Long = currentCycleOffset()
 
     // ── 控制命令 ────────────────────────────────────────────
 

@@ -102,7 +102,43 @@ object CoordinateMarkersController {
     private val playbackListener = object : PlaybackController.Listener {
         override fun onPlaybackState(state: PlaybackEngine.State, scriptId: String?) {
             if (added) refresh()
+            when (state) {
+                PlaybackEngine.State.RUNNING -> startStepSync()
+                // 停止 / 暂停：立即收箭头（IDLE 还要把十字归零），不等下一次步骤事件。
+                else -> {
+                    handler.removeCallbacks(stepSync)
+                    if (added) updateActiveStep()
+                }
+            }
         }
+    }
+
+    /**
+     * 起播后把当前步推进到坐标层。
+     *
+     * 单步脚本没有任何「步骤切换」事件，而刚起播时引擎时钟还没推开、`cursorStepIndex()`
+     * 会返回 0；只推进一次的话整场都不会有十字高亮与滑动箭头（实测 10s 单步滑动无箭头）。
+     * 这里短间隔重试，直到取到有效步号或播放结束。
+     */
+    private val stepSync = object : Runnable {
+        private var tries = 0
+
+        override fun run() {
+            if (!added) return
+            val ord = PlaybackController.cursorStepIndex()
+            updateActiveStep()
+            if (ord == 0 && tries < 20 && PlaybackController.state == PlaybackEngine.State.RUNNING) {
+                tries++
+                handler.postDelayed(this, 100L)
+            } else {
+                tries = 0
+            }
+        }
+    }
+
+    private fun startStepSync() {
+        handler.removeCallbacks(stepSync)
+        handler.postDelayed(stepSync, 120L)
     }
 
     private val repositoryListener: () -> Unit = { if (added) { script = null; refresh() } }
@@ -326,12 +362,26 @@ object CoordinateMarkersController {
     /** 推进当前执行步：十字按此序号放大；不在执行时清零恢复原尺寸。数字颜色始终不变。 */
     private fun updateActiveStep() {
         val view = markers ?: return
-        val ordinal = if (PlaybackController.state == PlaybackEngine.State.IDLE) {
-            0
-        } else {
-            PlaybackController.cursorStepIndex()
+        val st = PlaybackController.state
+        when (st) {
+            PlaybackEngine.State.IDLE -> {
+                // 退出/停止：清滑动箭头（常驻紫线保留），十字归零恢复基础尺寸。
+                view.stopSwipeArrow()
+                view.setActiveOrdinal(0)
+            }
+            PlaybackEngine.State.PAUSED -> {
+                // 暂停：箭头必须立刻消失（需求/评审硬要求），但十字仍高亮当前步不变。
+                // 先按当前步设十字（若是滑动步 setActiveOrdinal 会先尝试起箭头），
+                // 再显式清掉箭头，确保「暂停即无箭头、十字保留」。
+                view.setActiveOrdinal(PlaybackController.cursorStepIndex())
+                view.stopSwipeArrow()
+            }
+            else -> {
+                // RUNNING：按当前步推进；若这一步是滑动，箭头会重新加载并从起点开始走
+                // （覆盖「暂停→恢复」后同一 ordinal 再次进入的情形，箭头恢复可见）。
+                view.setActiveOrdinal(PlaybackController.cursorStepIndex())
+            }
         }
-        view.setActiveOrdinal(ordinal)
     }
 
     // ── 圆点触摸窗 ──────────────────────────────────────────
