@@ -172,7 +172,8 @@ object OverlayController {
         // 加号也按下即开（第二十六轮实测：真触摸按加号 0/6 打开，注入通道 3/3 打开）。
         // 误触代价实测只有「暂停 + 弹层」，追加步骤要点第二下才发生，两下就能退回；
         // 而同一排的停止键代价更大却早就是按下即生效——留一个「按了没反应」的键才是缺陷。
-        onPress(view.btnOverlayToggle) { onToggleClicked() }
+        // 起播挂抬手，其余键挂按下，见 [onPress] 与 [onRelease]
+        onRelease(view.btnOverlayToggle) { onToggleClicked() }
         onPress(view.btnOverlayStop) { PlaybackController.stop() }
         // 关闭 = 结束这次操作：停回放，小窗与坐标层一起消失
         // （见 [closeScriptSession]；不这样等于把点击器藏起来继续跑）
@@ -361,10 +362,32 @@ object OverlayController {
      * 播放中注入的手势会作废在途的真触摸流：真触摸按下迷你条后 34~149ms 就被 CANCEL，
      * 永远等不到 UP，`setOnClickListener` 因此一次也不成立（同一坐标走 `input tap`
      * 注入则次次生效）。停止/暂停/关闭都是按下即算数的动作，所以挂在 DOWN 上。
+     *
+     * **起播（IDLE 下的 ▶）必须挂抬手**，见 [onRelease]。
      */
     private fun onPress(view: View, action: () -> Unit) {
         view.setOnTouchListener { _, event ->
             if (event.actionMasked == MotionEvent.ACTION_DOWN &&
+                !event.isInjectedDuringPlayback()
+            ) {
+                action()
+            }
+            true
+        }
+    }
+
+    /**
+     * 抬手（ACTION_UP）才执行一次。
+     *
+     * 起播不能用按下：闸门放行在按下后 65~92ms，而手指还按在条上时系统会把这段
+     * 真触摸流作废在途的注入手势——起播首笔只要落在「闸门放行 ~ 闸门放行+首笔时长」
+     * 之间就被 CANCEL（实测真触摸起播 18/18 截断，注入起播 3/3 正常）。等抬手再起，
+     * 手指已经离开屏幕，首笔不会被自己按的那一下打断。代价是起播晚一个按住时长
+     * （实测按住 120ms 时起播晚 210ms），换来的是首笔不再丢。
+     */
+    private fun onRelease(view: View, action: () -> Unit) {
+        view.setOnTouchListener { _, event ->
+            if (event.actionMasked == MotionEvent.ACTION_UP &&
                 !event.isInjectedDuringPlayback()
             ) {
                 action()
