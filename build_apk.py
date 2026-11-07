@@ -11,8 +11,7 @@ r"""
 
 签名：密钥库根目录按以下顺序找（找到即用）：
     1) 环境变量 JINN_KEYSTORE_ROOT（**设了就只用它**，打错路径会明确报错）
-    2) <workspace>/GLOBAL/credentials/JinnKeyStores
-    3) %USERPROFILE%\JinnKeyStores
+    2) 用户目录下的 JinnKeyStores
   根目录下按包名取密钥：<根目录>/<applicationId>/release.jks，密码读同级 JinnPassword.md。
   任何密钥与口令都不写入仓库文件。
 
@@ -35,17 +34,13 @@ if hasattr(sys.stdout, "reconfigure"):
 ROOT = Path(__file__).resolve().parent
 APPLICATION_ID = "com.blackberry.keyboard"
 MAX_APK_BYTES = int(2.5 * 1024 * 1024)
-DEFAULT_JDK = r"C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot"
 
 
 def keystore_root_candidates():
     env = (os.environ.get("JINN_KEYSTORE_ROOT") or "").strip()
     if env:
         return [Path(env)]
-    return [
-        ROOT.parent.parent / "GLOBAL" / "credentials" / "JinnKeyStores",
-        Path.home() / "JinnKeyStores",
-    ]
+    return [Path.home() / "JinnKeyStores"]
 
 
 def resolve_keystore_root():
@@ -91,14 +86,22 @@ def load_signing_env():
 
 
 def setup_java():
-    """显式锁定 JDK 21：PATH 里 JDK 25 排在前面，会让 Gradle 8.9 直接拒绝启动。"""
-    java_home = (os.environ.get("JINN_JAVA_HOME") or DEFAULT_JDK).strip()
-    if not Path(java_home, "bin", "java.exe").is_file() and not Path(java_home, "bin", "java").is_file():
-        print(f"[错误] 未找到 JDK: {java_home}", file=sys.stderr)
+    """优先使用 JINN_JAVA_HOME，其次使用 JAVA_HOME，最后沿用 PATH。"""
+    java_home = (
+        os.environ.get("JINN_JAVA_HOME")
+        or os.environ.get("JAVA_HOME")
+    ).strip()
+    if java_home:
+        if not Path(java_home, "bin", "java.exe").is_file() and not Path(java_home, "bin", "java").is_file():
+            print(f"[错误] 未找到 JDK: {java_home}", file=sys.stderr)
+            sys.exit(1)
+        os.environ["JAVA_HOME"] = java_home
+        os.environ["PATH"] = str(Path(java_home, "bin")) + os.pathsep + os.environ.get("PATH", "")
+        return java_home
+    if not shutil.which("java"):
+        print("[错误] 未找到 JDK，请设置 JINN_JAVA_HOME 或 JAVA_HOME", file=sys.stderr)
         sys.exit(1)
-    os.environ["JAVA_HOME"] = java_home
-    os.environ["PATH"] = str(Path(java_home, "bin")) + os.pathsep + os.environ.get("PATH", "")
-    return java_home
+    return ""
 
 
 def find_gradle():

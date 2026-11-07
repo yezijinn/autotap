@@ -14,7 +14,9 @@ import kotlin.coroutines.startCoroutine
  * 回放引擎：单线程 + 绝对时限 park，循环体内不分配对象。
  *
  * ## 时间基准
- * `deadline = anchorNs + offsetMs * 1e6`，anchorNs 是当前迭代时间轴 0 点的绝对时刻。
+ * `deadline = anchorNs + offsetMs * 1e6`，anchorNs 是当前迭代时间轴 0 点的绝对时刻，
+ * 取在 [InputBackend.prepare] **成功之后**：prepare 可能耗时，若从调用前起算，
+ * 带前置等待的脚本首片会当场过期并被提前派发。
  * 每次切片都按绝对 deadline 等待，因此 `execute` 花多久（片长）都不会累积漂移；
  * 一旦某片超时，下一片会立刻补上（catch-up），而不是把误差往后传。
  *
@@ -23,9 +25,14 @@ import kotlin.coroutines.startCoroutine
  * 进入暂停时记录时刻，恢复时把 anchorNs 平移整个暂停时长——时间轴上的相对关系
  * 不变，因此不会产生漂移。
  *
+ * 请求时刻随事件入队（[Event.Pause]/[Event.Resume]），不在共享字段上互相覆盖：
+ * 连按暂停/恢复时，账本按请求顺序结算，重复请求既不会挪动区间起点，
+ * 也不会拉长区间终点。
+ *
  * ## 线程/重入
  * - 单实例单线程：并发第二次 Start 由 [active] 直接拒绝（runToken 再次兜底）；
  * - 外部只能投递 [Command]，引擎在切片边界与唤醒点统一消费；
+ *   命令转成带时刻的内部事件后才入队（暂停/恢复的时间语义只取决于请求时刻）；
  * - 队列、切片均预分配，稳态回放不产生调度对象；每次调用 `execute` 只分配一个续体
  *   （O(1)/片，而非 O(1)/stroke）。这是接口形状带来的唯一固有分配，
  *   等待侧（线程挂起/唤醒）仍由可复用的 [CallSite] 承担。
@@ -46,7 +53,7 @@ class PlaybackEngine(private val backend: InputBackend) {
         private set
 
     private val active = AtomicBoolean(false)
-    private val commands = ConcurrentLinkedQueue<Command>()
+    private val events = ConcurrentLinkedQueue<Event>()
 
     @Volatile
     private var worker: Thread? = null
@@ -57,17 +64,16 @@ class PlaybackEngine(private val backend: InputBackend) {
     @Volatile
     private var stopRequested = false
 
+    /**
+     * 当前冻结区间的起点（纳秒）；0 表示没有未结算的暂停。
+     *
+     * 起点跟着事件入队，不写预共享字段：重复的暂停请求晚到时，结算方看到区间
+     * 已开就直接忽略，不会用更晚的请求时刻把最早起点覆盖掉。
+     */
     @Volatile
-    private var pauseRequested = false
+    private var pauseStartNs = 0L
 
-    @Volatile
-    private var pauseReqNs = 0L
-
-    /** 恢复请求时刻；与 [pauseReqNs] 配对，折叠记账两端都取请求时刻。 */
-    @Volatile
-    private var resumeReqNs = 0L
-
-    /** 被同一次 drain 折叠掉的暂停时长（纳秒），下一轮循环顶部计入账本。 */
+    /** 已闭合、尚未计入 anchor 的冻结时长（纳秒），下一轮循环顶部入账。 */
     private var collapsedPauseNs = 0L
 
     @Volatile
@@ -138,12 +144,10 @@ class PlaybackEngine(private val backend: InputBackend) {
         if (!active.compareAndSet(false, true)) return false
         lastError = null
         stopRequested = false
-        pauseRequested = false
-        pauseReqNs = 0L
-        resumeReqNs = 0L
+        pauseStartNs = 0L
         collapsedPauseNs = 0L
         wakeRequested = false
-        commands.clear()
+        events.clear()
         val limit = if (loopTimes <= 0) 0 else loopTimes
         cursorCycle = from?.cycle ?: 0L
         cursorSlice = from?.sliceIndex ?: 0
@@ -174,22 +178,20 @@ class PlaybackEngine(private val backend: InputBackend) {
 
     fun pause(): Boolean {
         if (!active.get()) return false
-        // 冻结起点取请求时刻，不是命令被消费的时刻：本片还要跑完（长手势最长 600ms 宽限），
+        // 冻结起点取请求时刻，不是事件被消费的时刻：本片还要跑完（长手势最长 600ms 宽限），
         // 这段按旧写法算成正常播放，时间轴会永久少一段（实测 3s 长按暂停少 601ms）。
-        pauseReqNs = System.nanoTime()
-        // 新的暂停对开启：上一轮的恢复请求时刻作废，否则折叠记账会取到比暂停更早的值
-        resumeReqNs = 0L
-        commands.add(Command.Pause)
+        // 重复请求照样入队：结算时区间已开就忽略，起点仍是最早那一次。
+        events.add(Event.Pause(System.nanoTime()))
         wake()
         return true
     }
 
     fun resume(): Boolean {
         if (!active.get()) return false
-        // 与 [pauseReqNs] 对称：折叠记账的终点也取请求时刻，不能等命令被消费时才取
+        // 与暂停对称：终点取请求时刻，不能等事件被消费时才取
         // （实测 200ms 暂停被记成 602ms，时间轴多后移 400ms）。
-        resumeReqNs = System.nanoTime()
-        commands.add(Command.Resume)
+        // 重复请求由结算方丢弃：区间已闭合时不会再记第二段。
+        events.add(Event.Resume(System.nanoTime()))
         wake()
         return true
     }
@@ -197,7 +199,7 @@ class PlaybackEngine(private val backend: InputBackend) {
     /** 请求停止；在途切片仍会走完（execute 阻塞到片尾的契约决定）。 */
     fun stop(): Boolean {
         if (!active.get()) return false
-        commands.add(Command.Stop)
+        events.add(Event.Stop)
         wake()
         // 兜底保险：后端回调丢失时（真实故障，见 A11yBackend 的看门狗说明），
         // 命令永远等不到消费窗口，线程会一直挂在 CallSite 上。
@@ -238,7 +240,8 @@ class PlaybackEngine(private val backend: InputBackend) {
         var cycle = from?.cycle ?: 0L
         var sliceIndex = from?.sliceIndex ?: 0
         var plan = if (cycle == 0L) schedule.first else schedule.steady
-        var anchorNs = System.nanoTime()
+        // 时间轴 0 点在 prepare 返回后才定：见类注释「时间基准」
+        var anchorNs: Long
 
         try {
             val prepared = callSite.run(prepareCall)
@@ -246,10 +249,11 @@ class PlaybackEngine(private val backend: InputBackend) {
                 recordError(prepared.exceptionOrNull())
                 return
             }
+            anchorNs = System.nanoTime()
 
             while (true) {
                 if (runToken != token) return
-                drain()
+                drain(anchorNs)
                 if (collapsedPauseNs != 0L) {
                     // 折叠掉的暂停：时间轴整体后移，与「暂停生效」同一条记账路径
                     anchorNs += collapsedPauseNs
@@ -257,11 +261,9 @@ class PlaybackEngine(private val backend: InputBackend) {
                     collapsedPauseNs = 0L
                 }
                 if (stopRequested) return
-                if (pauseRequested) {
-                    val pausedNs = waitWhilePaused(token)
-                    if (pausedNs < 0L) return
-                    anchorNs += pausedNs
-                    pausedTotalNs += pausedNs
+                if (pauseStartNs != 0L) {
+                    // 冻结期间 anchor 不动；区间闭合后由下一轮循环顶部统一入账
+                    if (!waitWhilePaused(token, anchorNs)) return
                     continue
                 }
 
@@ -338,44 +340,43 @@ class PlaybackEngine(private val backend: InputBackend) {
         }
     }
 
-    /** 返回暂停时长（纳秒）；<0 表示期间收到停止/代次变更。 */
-    private fun waitWhilePaused(token: Long): Long {
+    /** 在冻结区间内等待；返回 false 表示期间收到停止/代次变更。 */
+    private fun waitWhilePaused(token: Long, anchorNs: Long): Boolean {
         state = State.PAUSED
-        // 从**请求时刻**起算：本片可能在请求之后还要跑几百毫秒才收尾，
-        // 那段时间同样属于冻结区间，不能算成在播放。
-        val pauseStartNs = if (pauseReqNs != 0L) pauseReqNs else System.nanoTime()
         while (true) {
-            drain()
-            if (runToken != token || stopRequested) return -1L
-            if (!pauseRequested) break
+            drain(anchorNs)
+            if (runToken != token || stopRequested) return false
+            // 区间由 drain 按请求时刻闭合：重复的恢复请求在这里被丢弃，
+            // 终点始终是第一次恢复的请求时刻。
+            if (pauseStartNs == 0L) break
             LockSupport.park()
         }
         state = State.RUNNING
-        pauseReqNs = 0L
-        // 终点同样取恢复的**请求时刻**：解析出这条命令到本行之间还有一次线程唤醒
-        val endNs = if (resumeReqNs != 0L) resumeReqNs else System.nanoTime()
-        resumeReqNs = 0L
-        return endNs - pauseStartNs
+        return true
     }
 
-    private fun drain() {
+    private fun drain(anchorNs: Long) {
         while (true) {
-            when (commands.poll() ?: return) {
-                is Command.Start -> Unit // Start 不进队列（由 start() 直接处理）
-                Command.Pause -> pauseRequested = true
-                Command.Resume -> {
-                    // 暂停与恢复落在同一次 drain 时会互相抵消：waitWhilePaused 从未进入，
-                    // 这段时长既没冻结也没记账，时间轴就当它没发生。这里补记进暂停账本。
-                    // 两端都取**请求时刻**：命令要到片尾才被消费，用消费时刻会把
-                    // 「恢复请求 → 片尾」这段余量算成暂停（实测请求 199ms 记成 602ms）。
-                    if (pauseRequested && state != State.PAUSED && pauseReqNs != 0L) {
-                        collapsedPauseNs += (resumeReqNs - pauseReqNs).coerceAtLeast(0L)
-                        resumeReqNs = 0L
-                        pauseReqNs = 0L
-                    }
-                    pauseRequested = false
+            when (val event = events.poll() ?: return) {
+                is Event.Pause -> {
+                    // 已有未结算区间：重复的暂停请求不许挪动起点
+                    if (pauseStartNs == 0L) pauseStartNs = event.atNs
                 }
-                Command.Stop -> stopRequested = true
+                is Event.Resume -> {
+                    // 没有未结算区间：重复/多余的恢复请求直接丢弃，不记负时长
+                    val startNs = pauseStartNs
+                    if (startNs != 0L) {
+                        // 折叠记账：暂停与恢复落在同一次 drain 时区间从未进入等待，
+                        // 这段既没冻结也没记账，时间轴就当它没发生。两端都取**请求时刻**：
+                        // 事件要到片尾才被消费，用消费时刻会把「请求 → 片尾」算成暂停
+                        // （实测请求 199ms 记成 602ms）。
+                        // 起点早于时间轴 0 点（prepare 期间就按了暂停）时只记 0 点之后：
+                        // 之前脚本还没开始，把 prepare 耗时算成冻结会让首片整体后移。
+                        collapsedPauseNs += (event.atNs - maxOf(startNs, anchorNs)).coerceAtLeast(0L)
+                        pauseStartNs = 0L
+                    }
+                }
+                Event.Stop -> stopRequested = true
             }
         }
     }
@@ -383,6 +384,19 @@ class PlaybackEngine(private val backend: InputBackend) {
     private fun wake() {
         wakeRequested = true
         worker?.let { LockSupport.unpark(it) }
+    }
+
+    /**
+     * 入队事件：控制线程只投递，引擎线程统一消费。
+     *
+     * 暂停/恢复各自携带请求时刻，队列保序即账本保序：重复请求不会被后来者覆盖
+     * 起点或终点，连按也不会把两段冻结挤成一段。投递只发生在人工操作时，
+     * 稳态回放不产生事件对象。
+     */
+    private sealed class Event {
+        class Pause(val atNs: Long) : Event()
+        class Resume(val atNs: Long) : Event()
+        object Stop : Event()
     }
 
     /**

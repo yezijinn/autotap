@@ -143,17 +143,17 @@ class MainActivity : AppCompatActivity() {
      * 与 [PanelActivity]、[ScriptEditorActivity]、[InjectShieldLayout]、对话框差一步：
      * 那几处丢完还要 [PlaybackController.pauseForModal]（一开模态用户就该停手，
      * 顺带覆盖音量键恢复）。主页不是模态——它正是「按下开始、还没切到目标应用」的那一屏，
-     * 跟着暂停会把正常流程打断：实测（第二十七轮）主页上按 ▶，脚本首击 100ms 就落在本页，
+     * 跟着暂停会把正常流程打断：实测主页上按 ▶，脚本首击 100ms 就落在本页，
      * 一暂停就变「已暂停」，脚本等于没跑起来（两次不同脚本各复现 1 次）。
      *
      * 所以判据按事件来源分：注入的（`deviceId < 0`）吞掉，内核真触摸（`deviceId` 是 InputDevice
-     * id，本机为 3）照常放行。第二十八轮实测：无障碍注入、`input tap`、`input motionevent`
-     * 全是 −1；`sendevent` 与 MuMu 宿主鼠标点击都是 3，都能通过闸门。
+     * id，本机为 3）照常放行。实测：无障碍注入、`input tap`、`input motionevent`
+     * 全是 −1；`sendevent` 与模拟器宿主鼠标点击都是 3，都能通过闸门。
      * 失败方向可接受：某些 ROM 若给注入事件正 deviceId，闸门退化成「没有它」，
      * 和加它之前一样，不会把用户的手指一起挡掉。
      *
      * 别把这句读成「播放中手指一定点得动」：引擎每 160ms 一笔注入，在途手指会被系统取消
-     * （DOWN 后 13~145ms 收到 ACTION_CANCEL），与闸门无关，应用侧没有解法。第二十八轮
+     * （DOWN 后 13~145ms 收到 ACTION_CANCEL），与闸门无关，应用侧没有解法。
      * 实测「编辑」：30ms 轻点 11/15 成功，108ms 正常点击 0/15——间隔越短越容易点成，
      * 但不是单调关系（90ms 周期的脚本上 30ms 轻点 15/15 全成）。
      * 本页卡片四键走 `setOnClickListener`，缺 UP 就不成立；迷你条挂在 DOWN 上，

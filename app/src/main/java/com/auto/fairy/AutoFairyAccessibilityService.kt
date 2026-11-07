@@ -1,21 +1,33 @@
 package com.auto.fairy
 
 import android.accessibilityservice.AccessibilityService
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.util.Log
 import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
+import androidx.core.content.ContextCompat
+import com.auto.fairy.core.runtime.PlaybackEngine
 import com.auto.fairy.overlay.CoordinateMarkersController
 
 /**
  * 无障碍服务：进程常驻锚点 + 注入后端宿主（设计方案 4.1）。
  *
- * v1.0 不做控件点击/读屏，onAccessibilityEvent 留空；服务唯一职责是把
- * [A11yBackend] 注册进 [PlaybackController]，并在存活期间让进程处于活跃状态。
+ * 不做控件点击/读屏；服务唯一职责是把 [A11yBackend] 注册进 [PlaybackController]，
+ * 并在存活期间让进程处于活跃状态。
+ *
+ * 只额外消费一种事件：`typeWindowStateChanged`。把前台窗口的包名喂给
+ * [PlaybackController.onForegroundWindow]，播放/暂停期间切到别的应用就地停止——
+ * 脚本坐标只对录制时那一屏成立，换了 App 还照点就是乱点。
  *
  * 另外承担音量键停止：配置里声明了 flagRequestFilterKeyEvents，按键是否被接管由
  * [onKeyEvent] 逐次决定——**只有脚本正在运行**时才消费并停止，其余情况一律返回 false，
  * 音量键照常交给系统，不会把系统音量锁死，也不会在空闲时被本应用拦截。
+ *
+ * 还承担灭屏停止：监听 [Intent.ACTION_SCREEN_OFF]，回放未空闲即 [PlaybackController.stop]，
+ * 亮屏/解锁不自动恢复。接收器随服务注册与注销，重连不重复注册。
  */
 class AutoFairyAccessibilityService : AccessibilityService() {
 
@@ -30,6 +42,18 @@ class AutoFairyAccessibilityService : AccessibilityService() {
 
     private var backend: A11yBackend? = null
 
+    /** 灭屏守卫：屏幕一灭就停回放，避免盲点屏幕继续注入。 */
+    private var screenOffRegistered = false
+
+    private val screenOffReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val idle = PlaybackController.state == PlaybackEngine.State.IDLE
+            if (!ScreenOffGuard.shouldStop(intent?.action, idle)) return
+            Log.i(TAG, "screen off: stop playback")
+            PlaybackController.stop()
+        }
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
@@ -40,6 +64,16 @@ class AutoFairyAccessibilityService : AccessibilityService() {
         val created = A11yBackend(this)
         backend = created
         PlaybackController.attachBackend(created)
+        // 灭屏守卫随服务注册：重连不重复注册，注销只在 detach
+        if (!screenOffRegistered) {
+            ContextCompat.registerReceiver(
+                this,
+                screenOffReceiver,
+                IntentFilter(Intent.ACTION_SCREEN_OFF),
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+            screenOffRegistered = true
+        }
         // 服务连接不挂出任何浮层：小窗只由「激活」唤起。
         // 坐标层只在会话还在（小窗挂着）时补挂一次，重连不会凭空画出红点。
         CoordinateMarkersController.restore(this)
@@ -48,7 +82,10 @@ class AutoFairyAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // v1.0 不消费无障碍事件
+        // 只关心「前台窗口变了」：配置里也只订了这一种（见 accessibility_service_config）。
+        // 包名交给 PlaybackController 的守卫判定，本类不做任何状态判断。
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        PlaybackController.onForegroundWindow(event.packageName)
     }
 
     override fun onInterrupt() {
@@ -89,6 +126,11 @@ class AutoFairyAccessibilityService : AccessibilityService() {
 
     private fun detach() {
         if (instance === this) instance = null
+        // 注销放在 backend 空判定之前：onUnbind 与 onDestroy 可能连着各调一次
+        if (screenOffRegistered) {
+            screenOffRegistered = false
+            runCatching { unregisterReceiver(screenOffReceiver) }
+        }
         val current = backend ?: return
         backend = null
         PlaybackController.detachBackend(current)
@@ -97,4 +139,15 @@ class AutoFairyAccessibilityService : AccessibilityService() {
         // 主界面横幅要跟着回到「未开启」
         PermissionStatus.notifyA11yChanged()
     }
+}
+
+/**
+ * 灭屏守卫的判定，抽成纯函数便于单测。
+ *
+ * 只认 ACTION_SCREEN_OFF；回放空闲时不动，避免多余的状态广播与界面闪动。
+ * 亮屏、解锁一律不处理：不做自动恢复。
+ */
+internal object ScreenOffGuard {
+    fun shouldStop(action: String?, idle: Boolean): Boolean =
+        action == Intent.ACTION_SCREEN_OFF && !idle
 }

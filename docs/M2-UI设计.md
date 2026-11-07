@@ -2,7 +2,7 @@
 
 > 包名 `com.auto.fairy`，技术栈 **Views + ViewBinding + AppCompat**，不引入 Compose、不引入 Material 组件库。
 > 所有圆角/配色/背景均用自绘 **shape drawable / VectorDrawable** 实现，图标走 VectorDrawable 以压体积。
-> 本文件面向 `@fixer`：每个布局均为可直接落地的 `res/layout/*.xml` 规格，并含 view id 命名规范。
+> 本文件面向实现：每个布局均为可直接落地的 `res/layout/*.xml` 规格，并含 view id 命名规范。
 
 ---
 
@@ -485,7 +485,7 @@
 - 常驻 `WindowManager`，`TYPE_APPLICATION_OVERLAY`，跨页面显示，不挡屏。
 - **折叠态**：小圆钮（状态色 + 可选脉冲动画），常驻屏幕边缘。
 - **展开态**：面板含 播放/暂停、停止、循环次数、打开列表 四个一触即达控件。
-- **拖动 vs 点击**：`MotionEvent` 中记录 `downX/downY` 与 `downTime`；移动超过 **8dp** 视为拖动（不触发展开），否则视为点击（切换展开/收起）。阈值常量由 fixer 抽成 `DRAG_SLOP = 8dp`。
+- **拖动 vs 点击**：`MotionEvent` 中记录 `downX/downY` 与 `downTime`；移动超过 **8dp** 视为拖动（不触发展开），否则视为点击（切换展开/收起）。阈值常量抽成 `DRAG_SLOP = 8dp`。
 - **边缘吸附（可选 M2）**：松手时若靠近左右边缘，动画吸附到边缘并保留 8dp 内边距；默认开启，可在设置页关。
 
 ### 3.2 `overlay_window.xml`（折叠 + 展开同布局，靠 `visibility` 切换）
@@ -677,7 +677,7 @@
 <!-- bg_status_dot_big.xml 同形，仅尺寸由 layout 控制，颜色由代码设 -->
 ```
 
-### 3.4 状态/健康 → 颜色映射（fixer 实现参考）
+### 3.4 状态/健康 → 颜色映射（实现参考）
 
 | 播放状态 | 折叠钮色 | 展开 `text_overlay_state` |
 |---|---|---|
@@ -861,7 +861,7 @@
 | `ic_settings` | 设置入口 | 齿轮外环 + 中心圆 |
 | `ic_empty` | 空态 | 文件夹/列表线框 |
 
-> 图标具体 pathData 由 fixer 按上述几何落盘（均为单色、可 tint，符合体积预算）。
+> 图标具体 pathData 按上述几何落盘（均为单色、可 tint，符合体积预算）。
 
 ---
 
@@ -892,7 +892,7 @@
 
 ---
 
-## 8. 落地检查清单（fixer 用）
+## 8. 落地检查清单（实现用）
 
 - [ ] `colors.xml` / `strings.xml` / `themes.xml` 按 §0 追加
 - [ ] `res/drawable/` 新增 11 个 shape + 9 个 vector 图标

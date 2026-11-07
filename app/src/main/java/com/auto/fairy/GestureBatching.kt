@@ -25,7 +25,7 @@ internal class Batch(val strokes: List<PendingStroke>, val firstStartMs: Long)
  * `GestureDescription` 的多条 stroke 是**同一次手势**的多根手指：pointerId 按 stroke
  * 下标分配，共享同一个 downTime。把「前一笔抬起、后一笔接着按下」的两条 stroke 放进
  * 同一个 description 时，接收方看到的是同一根手指一直按着（第一根指针始终不抬起），
- * 于是每一次点击都不成立。MuMu/API32 实测：40 次相邻点击（间隔 60ms、按住 60ms）
+ * 于是每一次点击都不成立。模拟器/API32 实测：40 次相邻点击（间隔 60ms、按住 60ms）
  * 只产生 **1 次** `touchstart`；而间隔 300ms 的两笔放进同一 description 仍是 2 次
  * 独立点击（有 240ms 真正抬手空档）。因此分批规则改为：
  *

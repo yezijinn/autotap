@@ -50,6 +50,7 @@
     <string name="toast_script_empty">脚本没有任何动作，无法播放</string>
     <string name="toast_a11y_needed">请先开启无障碍服务</string>
     <string name="toast_playback_stopped_no_backend">无障碍服务已断开，回放停止</string>
+    <string name="toast_stop_app_switched">已切换应用，回放停止</string>
     <string name="toast_import_ok">已导入「%1$s」</string>
     <string name="toast_import_failed">导入失败：%1$s</string>
     <string name="import_too_large">文件超过 %1$d MB，不是脚本文件</string>

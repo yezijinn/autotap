@@ -125,7 +125,7 @@ object OverlayScriptList {
         view.btnListNew.setOnClickListener { createScript() }
         view.btnListRecord.setOnClickListener { startRecording() }
         // 回放中注入的点击到不了这里：根容器 [InjectShieldLayout] 在 injecting 期间丢弃整串事件
-        // （第二十六轮实测：播放中打开加号层、脚本点在其「点击」按钮上，步数 +1；列表同理会命中「激活 / 删除」）。
+        // （实测：播放中打开加号层、脚本点在其「点击」按钮上，步数 +1；列表同理会命中「激活 / 删除」）。
         // 这层遮罩点击仍按原样：只认用户自己的点击关窗。
         view.root.setOnClickListener { if (!PlaybackController.injecting) close() }
         view.root.isFocusableInTouchMode = true

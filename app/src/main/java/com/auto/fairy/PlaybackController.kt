@@ -8,6 +8,7 @@ import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
 import android.provider.Settings
+import android.util.Log
 import android.view.Choreographer
 import android.view.MotionEvent
 import android.view.Window
@@ -60,6 +61,35 @@ object PlaybackController {
     private var currentScriptId: String? = null
     private var loopLimit: Int = 0
 
+    /**
+     * 外部应用守卫：记录前台包名，播放/暂停期间切走就停（见 [onForegroundWindow]）。
+     *
+     * 判定全在 [ExternalAppGuard] 里（纯 Kotlin，有单测）：本类只负责把无障碍事件喂进去，
+     * 并把「该停」变成一次 [stop] + 一句提示。
+     * 本包名取运行时的 [Context.getPackageName]（applicationId）——事件里报的也是它，
+     * 不能按 namespace 写死。
+     *
+     * 默认输入法作为忽略包传入：键盘窗口叠在目标应用上方，事件报的是它自己的包名，
+     * 那不是「用户切走了」，按外部应用处理会在播放中点开输入框时立刻停掉回放。
+     */
+    private val appGuard: ExternalAppGuard by lazy {
+        ExternalAppGuard(appContext.packageName, ignoredPackages = defaultImePackages())
+    }
+
+    /**
+     * 当前默认输入法的包名集合（通常 0 或 1 项）。
+     *
+     * 系统设置里记的是 `<包名>/<服务类名>`（见 [Settings.Secure.DEFAULT_INPUT_METHOD]），
+     * 这里只取包名。读不到就返回空集，守卫退回不做过滤的旧行为——取不到不该让回放停摆。
+     */
+    private fun defaultImePackages(): Set<String> {
+        val id = Settings.Secure.getString(
+            appContext.contentResolver,
+            Settings.Secure.DEFAULT_INPUT_METHOD,
+        )
+        return imePackageOf(id)?.let(::setOf) ?: emptySet()
+    }
+
     /** [pauseForModal] 真的停过一次、还没提示过：关浮层时据此弹「已暂停」。 */
     private var pausedForModal = false
 
@@ -100,7 +130,7 @@ object PlaybackController {
      *
      * 系统撤权限只把我们的浮层**隐藏**（窗口仍留在 WMS 里、没有 detach），
      * 所以 `OverlayController` 的摘窗回调不会来：用户看到的是「小窗没了、点击还在跑」
-     * 而没有任何可停之处。实测（MuMu/API32）：撤权限后 1 分钟回放线程仍在，
+     * 而没有任何可停之处。实测（模拟器/API32）：撤权限后 1 分钟回放线程仍在，
      * 三个浮层窗口仍列在 WMS 里但一个都不画在屏上。
      * AppOps 的模式变化是这里唯一能拿到的信号，收到就按「小窗被摘掉」同一套动作收尾。
      */
@@ -219,7 +249,7 @@ object PlaybackController {
      * 2. 闸门要做的第二件事是「重新暂停」（覆盖音量键恢复），这只能靠状态。
      *
      * 因此任何「点到浮层外部就关闭」的浮层都必须问一句：这一下真是用户点的吗？
-     * 实测（第十八轮）：2 步 460ms 的脚本会让播放中打开的设置卡片在半秒内自己关掉，
+     * 实测：2 步 460ms 的脚本会让播放中打开的设置卡片在半秒内自己关掉，
      * 关掉后点击落到主界面的脚本列表上。遮罩的处置因此改成「运行中不关」，
      * 只认各自的关闭按钮与返回键。
      *
@@ -239,7 +269,7 @@ object PlaybackController {
      * 为什么不继续用 [injecting] 逐个拦：那只挡「点到浮层外面」，挡不住「点在开关上」。
      * 实测（4 步脚本 640ms 一轮，播放中打开设置页 7 秒）：`snap_edge_enabled` 与
      * `volume_key_enabled` 被点成 false，用户自己关掉的 `coord_visible` 又被点回 true。
-     * 开关、色块、输入框、删除确认全都有点击监听，逐个屏蔽既漏（十八轮同类漏 4 次）
+     * 开关、色块、输入框、删除确认全都有点击监听，逐个屏蔽既漏（同类遗漏 4 次）
      * 又不跟着新增控件走。
      *
      * 只暂停不停止：关掉浮层后按开始键从原进度继续，跑过的轮次不重来。
@@ -288,7 +318,15 @@ object PlaybackController {
     private var repeatStartMs: Long = 0L
 
     private var startedAtNs = 0L
-    private var pausedAtNs = 0L
+
+    /**
+     * 暂停冻结时刻的小状态机（见 [PauseFreezeClock]）。
+     *
+     * 为什么不能直接看引擎状态判断「是不是重复暂停」：Pause 是投递给引擎线程的命令，
+     * 从按下到片边界生效之间 state 仍是 RUNNING。若按 state 判断，这段窗口里的第二次
+     * pause 就会把冻结时刻往后推，读数随之倒退。判定只认「本类已经发过暂停请求」。
+     */
+    private val pauseFreeze = PauseFreezeClock()
 
     fun cursorStepIndex(): Int {
         val currentState = state
@@ -299,19 +337,10 @@ object PlaybackController {
         return stepOrdinals.getOrElse(resolved) { 0 }
     }
 
-    /** 当前一轮内的时间偏移（与 [cursorStepIndex] 同一口径）。 */
+    /** 当前时间轴内的时间偏移（与 [cursorStepIndex] 同一口径）。 */
     private fun currentOffset(): Long {
         if (stepEnds.isEmpty()) return 0L
-        val reference = if (state == PlaybackEngine.State.PAUSED && pausedAtNs > 0L) {
-            pausedAtNs
-        } else {
-            System.nanoTime()
-        }
-        // 暂停时长一律扣引擎的账（[PlaybackEngine.pausedNanos]）：按本类发出暂停请求的
-        // 时刻记会把「请求→片尾」那段落下来，且每次暂停都累加，高亮会越拖越偏。
-        val elapsed = (reference - startedAtNs - (engine?.pausedNanos() ?: 0L))
-            .coerceAtLeast(0L) / 1_000_000L
-        return cycleOffset(elapsed)
+        return cycleOffset(elapsedMs())
     }
 
     /**
@@ -337,18 +366,18 @@ object PlaybackController {
         return elapsed % cyclePeriodMs
     }
 
-    /** 当前一轮内的时间偏移（含暂停扣除）；对外暴露给坐标层算箭头进度用。 */
-    private fun currentCycleOffset(): Long =
-        if (stepEnds.isEmpty()) 0L else cycleOffset(currentOffsetRaw())
-
-    /** 与 [currentOffset] 同口径，但不做再次取模（保留跨轮累计，便于按绝对 ms 定位步骤）。 */
-    private fun currentOffsetRaw(): Long {
-        val reference = if (state == PlaybackEngine.State.PAUSED && pausedAtNs > 0L) {
-            pausedAtNs
-        } else {
-            System.nanoTime()
-        }
-        return (reference - startedAtNs - (engine?.pausedNanos() ?: 0L)).coerceAtLeast(0L) / 1_000_000L
+    /**
+     * 播放开始至今的毫秒数（未取模）：墙钟 − 起播时刻 − 引擎账本里的暂停累计。
+     *
+     * 参考时刻见 [readoutReferenceNs]；暂停时长一律扣引擎的账
+     * （[PlaybackEngine.pausedNanos]）：按本类发出暂停请求的时刻记会把「请求→片尾」
+     * 那段落下来，且每次暂停都累加，高亮会越拖越偏。
+     */
+    private fun elapsedMs(): Long {
+        val now = System.nanoTime()
+        // state 只读一次：两次读之间状态可能变化，会让参考时刻与判据对不上
+        val reference = readoutReferenceNs(state == PlaybackEngine.State.PAUSED, pauseFreeze.frozenAtNs, now)
+        return elapsedMsAt(reference, startedAtNs, engine?.pausedNanos() ?: 0L)
     }
 
     /**
@@ -388,7 +417,7 @@ object PlaybackController {
      * 因此暂停时读数停住、恢复后接着走、循环到下一轮从头开始——与需求「速度由时长决定」
      * 以及「暂停/停止立刻消失」完全对齐（箭头窗口由播放状态而非墙钟控制）。
      */
-    fun cursorElapsedMs(): Long = currentCycleOffset()
+    fun cursorElapsedMs(): Long = currentOffset()
 
     // ── 控制命令 ────────────────────────────────────────────
 
@@ -496,8 +525,9 @@ object PlaybackController {
             // 冻结期间不注入，没有必须醒着的理由：一暂停就放锁，恢复时再拿
             releaseWakeLock()
             // 冻结读数取「第一次按下暂停」那一刻：迷你条 + 音量键、以及模态上的每次
-            // 触摸都会再催一次 pause，后到的不能把冻结时刻往后推。
-            if (pausedAtNs == 0L) pausedAtNs = System.nanoTime()
+            // 触摸都会再催一次 pause。判定不能看 state——首次请求到片边界生效之间
+            // state 仍是 RUNNING，按 state 判会把冻结时刻推后。见 [PauseFreezeClock]。
+            pauseFreeze.onPauseRequest(System.nanoTime())
             notifyState()
             syncStateLater()
         }
@@ -509,8 +539,12 @@ object PlaybackController {
         if (ok) {
             // 回放又跑起来了：不存在「还停在暂停」，旗标就此作废（见 noticeStillPausedAfterModal）
             pausedForModal = false
-            // 冻结时长由引擎记账（PlaybackEngine.pausedNanos），这里只解冻
-            pausedAtNs = 0L
+            // 不在这里清冻结标记：Resume 要等片边界才生效，此刻 state 仍是 PAUSED，
+            // 清掉会让读数前跳（见 [PauseFreezeClock]）。标记由 [notifyState] 在引擎确认
+            // 离开 PAUSED 后清；冻结时长本来就由引擎记账（[PlaybackEngine.pausedNanos]）。
+            // 但要放开「已发过暂停请求」这一位：恢复途中再按暂停属于新的一次冻结，
+            // 必须取新的冻结时刻（否则读数会从上一段暂停里接着算）。
+            pauseFreeze.onResumeRequest()
             // 暂停时放掉的锁在这里补回，恢复后仍需醒着驱动 nanoTime 定时
             acquireWakeLock()
             notifyState()
@@ -529,8 +563,8 @@ object PlaybackController {
         val ok = engine?.submit(Command.Stop) ?: false
         // 停止一定有效：引擎侧中断线程，后端侧立刻作废本片未派发的笔画，两条路径任一生效即可
         backend.requestAbort(dropPending = true)
-        // ok=false 只可能是引擎从未创建或被拒，那时这两个值本就为 0（startEngine 清过）
-        pausedAtNs = 0L
+        // ok=false 只可能是引擎从未创建或被拒；无论哪种，冻结标记都随之作废
+        pauseFreeze.reset()
         notifyState()
         // 引擎真正退出后补一次通知，把过渡态收干净
         syncStateLater()
@@ -549,6 +583,29 @@ object PlaybackController {
         if (state != PlaybackEngine.State.RUNNING) return false
         stop()
         return true
+    }
+
+    /**
+     * 前台窗口包名变化（无障碍 `typeWindowStateChanged`）：切到别的应用就停。
+     *
+     * 为什么要停：脚本记的是**录制时那一屏的绝对坐标**，换一个 App 后同一坐标落到
+     * 完全不同的控件上，继续跑就是替用户乱点（可能真的点出钱、点到删除）。
+     *
+     * 判定口径（含暂停）：
+     * - 起播时若前台已是外部应用，它就是目标；前台是本包、或还没收到过事件时目标留空，
+     *   由**第一个**外部包名锁定为目标——从本包切到目标 App 因此不会误停；
+     * - 目标锁定后，出现不同的外部包名立即停；
+     * - 本包（含自家浮层、设置面板）的事件一律不算切换；
+     * - 暂停同样算数：暂停后切了 App 再按继续，注入点击就会落到新 App 上。
+     */
+    fun onForegroundWindow(packageName: CharSequence?) {
+        val active = state != PlaybackEngine.State.IDLE
+        if (!appGuard.onWindow(packageName, active)) return
+        Log.i(TAG, "foreground app changed, stop playback")
+        stop()
+        // 监听方（浮层/界面）都在自己的进程里，且此刻可能已切到别人的界面，
+        // 用直弹吐司保证用户至少看到一句交代
+        showToast(appContext, R.string.toast_stop_app_switched)
     }
 
     // ── 内部装配 ────────────────────────────────────────────
@@ -747,7 +804,13 @@ object PlaybackController {
         fun fire() {
             if (startGate !== gate) return
             startGate = null
-            if (playToken.get() == token) action()
+            if (playToken.get() == token) {
+                action()
+            } else {
+                // 停止或新一轮播放废弃了等待中的起步：清掉闸门后补一次收尾，
+                // 让坐标标记不必等下一轮状态轮询才恢复。
+                notifyState()
+            }
         }
         fun maybeFire() {
             if (timeUp && frames >= PLAY_START_FRAMES) fire()
@@ -781,7 +844,7 @@ object PlaybackController {
     private fun startEngine(eng: PlaybackEngine, timeline: Timeline, loopTimes: Int) {
         // 步骤读数的计时基准与实际启动对齐（重启/等窗期间等待过，不能用 play() 的时刻）
         startedAtNs = System.nanoTime()
-        pausedAtNs = 0L
+        pauseFreeze.reset()
         // play() 已比过一次屏幕；但 runStart 的「撤窗→等两帧」窗口里屏幕仍可改，
         // 等窗结束才真正提交。窗口内改屏会让 prepare 采到新屏、旧坐标落到新屏。
         // 这里提交前再比一次，与 play() 同一口径，窗口内改屏直接拒播并说清差异。
@@ -799,10 +862,13 @@ object PlaybackController {
             failure = t.message ?: appContext.getString(R.string.toast_play_start_failed)
             false
         }
-        // 起步成败都清「停止过渡态」：成功则这一轮已经真的在跑；被拒/抛异常时
-        // 引擎里没有任何属于本次的播放，继续按 IDLE 呈现反而会让界面与实际脱节。
-        stopRequested = false
         if (ok) {
+            // 只有真正提交 Start 才能结束上一轮的停止过渡态。
+            // 被拒时旧引擎可能仍在收尾，清早会让界面重新暴露旧回放。
+            stopRequested = false
+            // 目标外部应用在此刻锁定：此刻前台若不是本包，那就是用户要跑的那一屏；
+            // 若还在本包（主页/浮层），留空等第一次外部窗口事件锁定，避免旧包名误停
+            appGuard.begin()
             // WakeLock 只在真的跑起来之后才持：被拒绝/抛异常时若先持锁，就没人释放，
             // 界面停在 IDLE 却一直亮着 CPU 锁。失败分支由下面的 notifyState 统一释放。
             acquireWakeLock()
@@ -862,18 +928,42 @@ object PlaybackController {
         listeners.remove(listener)
     }
 
+    /**
+     * 最近一次已通知的快照键（状态 / 脚本 / 后端健康 / 错误文案）。
+     *
+     * 只在主线程读写：见 [notifyState] 的线程收口。四项全同就不必再回调一次——
+     * 听众的活都是「重读状态 + 重读仓库」，重复通知等于重复 IO。
+     */
     private var lastNotifiedState: PlaybackEngine.State? = null
     private var lastNotifiedScriptId: String? = null
     private var lastNotifiedHealth: Health? = null
     private var lastNotifiedError: String? = null
 
     private fun notifyState() {
+        // 收口到主线程：listeners 拿到回调就动 View（坐标层、悬浮窗、脚本列表）。
+        // 无障碍事件、灭屏广播、音量键都在主线程；仓库变更、引擎回执、后端断开等路径
+        // 不保证同线程，所以这里统一兜住：非主线程只投递一次，执行时重读状态。
+        // 投递不重放旧状态——真正的去重在下面按四项键判，同状态不会再回调一次。
+        if (Looper.myLooper() != Looper.getMainLooper()) {
+            handler.post { notifyState() }
+            return
+        }
         val current = state
+        // 引擎确认的状态决定冻结读数去留：PAUSED 保留；RUNNING 只在没有待生效暂停时清
+        // （pause() 提交后紧跟的这次通知，引擎仍是 RUNNING，清了就把刚锁的时刻作废）；
+        // IDLE 表示这一轮结束，全部作废。见 [PauseFreezeClock]。
+        when (current) {
+            PlaybackEngine.State.RUNNING -> pauseFreeze.onRunningConfirmed()
+            PlaybackEngine.State.PAUSED -> Unit
+            PlaybackEngine.State.IDLE -> pauseFreeze.reset()
+        }
         // 引擎真的退出（自然跑完 / 异常 / 停止收尾完成）后做一次收尾：
         // 释放 WakeLock、清停止过渡态、把圆点触摸窗按用户开关补回。
         // 引擎仍在跑（只是「已请求停止」）时什么都不做，界面继续按 IDLE 呈现。
         if (current == PlaybackEngine.State.IDLE && engine?.isRunning != true) {
             releaseWakeLock()
+            // 这一轮已经结束，目标外部应用作废：下一次起播重新按当时前台锁定
+            appGuard.end()
             stopRequested = false
             // 起播闸门开着（撤窗 → 等窗口事务 → 提交 Start 之间）不要补回圆点窗：
             // 起播那刻会再撤一次，撤窗与首笔只隔几十毫秒，InputDispatcher 直接丢弃
@@ -1014,6 +1104,9 @@ object PlaybackController {
 
     private const val STATE_SETTLE_MS = 150L
 
+    /** 前台窗口切换导致停止的日志标签（真机排查用，与界面提示互不依赖）。 */
+    private const val TAG = "AutoFairyPlayback"
+
     /**
      * 起步前的等窗条件（见 [gateStart]）。
      *
@@ -1038,12 +1131,6 @@ object PlaybackController {
     private const val STATE_SYNC_TRIES = 11
 
     /**
-     * 高亮节拍的空时间轴兜底（见 [nextStepDelayMs]）：脚本没有可展开的步骤时
-     * 按这个间隔重试，不参与巡数读数。
-     */
-    private const val PROGRESS_TICK_MS = 500L
-
-    /**
      * 高亮推进的节流下限：步长短于一帧（~16ms）时人眼无法分辨单步，仍按此节拍刷，
      * 但每次都渲染当前精确步（[cursorStepIndex] 时间推导），不得停留在几步之前。
      */
@@ -1057,15 +1144,19 @@ object PlaybackController {
  * 对话框 / 面板 / 编辑器 / 悬浮浮层都要它：它们是**独立窗口**，宿主 Activity 的
  * `dispatchTouchEvent` 管不到；而 [PlaybackController.pauseForModal] 只停到片边界
  * （现象见 [PlaybackController.injecting]），片内还没派发的点击照旧落下来。
- * 实测（第二十六轮）：删除确认框开着时按音量键恢复播放，脚本的一笔注入直接点中
+ * 实测：删除确认框开着时按音量键恢复播放，脚本的一笔注入直接点中
  * 「删除」，脚本当场被删（可复现）。
  *
  * 与 [MainActivity] 差一步：主页不是模态，它只吞注入、不暂停（见那里的注释），
  * 且要用 `deviceId` 把内核真触摸放行——模态则没有这个必要，用户主动打开的模态
  * 里不可能有"必须放行"的手指。
  *
+ * 参数只为保住调用方签名（各界面都传自己的 `MotionEvent`）：判定只看播放状态，
+ * 不看事件内容。Kotlin 不允许函数参数命名为 `_`，未使用告警在这里抑制。
+ *
  * @return true 表示已吞掉这一笔，调用方应直接返回 true。
  */
+@Suppress("UNUSED_PARAMETER")
 fun shieldModalTouch(event: MotionEvent): Boolean {
     if (!PlaybackController.injecting) return false
     // 先重新暂停（覆盖音量键恢复的路径），再丢弃这一串
@@ -1123,7 +1214,7 @@ internal fun stepDelayToNextBoundary(
     repeatStart: Long,
 ): Long {
     val steady = if (repeatStart > 0L && period > repeatStart) period - repeatStart else 0L
-    val nextEnd = ends.firstOrNull { it > offset } ?: return 500L
+    val nextEnd = ends.firstOrNull { it > offset } ?: return PROGRESS_TICK_MS
     var delay = nextEnd - offset
     if (steady > 0L) {
         // 当前落在稳态区间：下个边界可能是本循环体的下一步，也可能是下一轮首步
@@ -1132,3 +1223,170 @@ internal fun stepDelayToNextBoundary(
     }
     return delay
 }
+
+/** 空时间轴的高亮重试间隔；不参与巡数读数。 */
+private const val PROGRESS_TICK_MS = 500L
+
+/**
+ * 读数参考时刻：引擎确实停在 PAUSED 且有冻结标记时取冻结时刻（读数停住、不随墙钟漂移），
+ * 其余一律取墙钟。
+ *
+ * 判据里**没有**「刚点过恢复」：Resume 要等片边界才被引擎消费，这段窗口里 state 仍是
+ * PAUSED、引擎账本（[PlaybackEngine.pausedNanos]）也还没记入这段冻结。若此时按墙钟读数，
+ * 进度会比冻结值前跳一整段暂停时长（最长一个片，约 400ms），等账本补上又跳回来。
+ * 因此冻结标记只在引擎确认离开 PAUSED 后才清（见 `PlaybackController.notifyState`）。
+ *
+ * 纯计算，便于单测，不引用 PlaybackController 任何成员（触碰那个 object 会触发
+ * Android 静态初始化，JVM 单测跑不起来）。
+ */
+internal fun readoutReferenceNs(enginePaused: Boolean, frozenAtNs: Long, nowNs: Long): Long =
+    if (enginePaused && frozenAtNs > 0L) frozenAtNs else nowNs
+
+/**
+ * 播放已过去的毫秒数：参考时刻 − 起播时刻 − 引擎账本里的暂停累计（负值按 0）。
+ *
+ * 与 [readoutReferenceNs] 合起来才是完整的读数口径：暂停时参考时刻冻结、恢复后由账本
+ * 扣掉冻结时长，两段在恢复点严格接上，不跳变。纯计算，便于单测。
+ */
+internal fun elapsedMsAt(referenceNs: Long, startedAtNs: Long, pausedNanos: Long): Long =
+    (referenceNs - startedAtNs - pausedNanos).coerceAtLeast(0L) / 1_000_000L
+
+/**
+ * 暂停冻结时刻的小状态机：决定「按下暂停那一刻」是哪一个时刻。
+ *
+ * 只有两个字段：冻结时刻 [frozenAtNs]（0 = 没有冻结读数）与「已发出暂停请求」位。
+ *
+ * 为什么按请求位判重复，而不是按引擎状态：Pause 是投递给引擎线程的命令，从按下到
+ * 片边界生效之间 state 仍是 RUNNING。旧实现用 `frozenAtNs == 0L || !wasPaused` 判断，
+ * 这段窗口里再催一次 pause（迷你条、模态触摸、音量键都会重复催）就把冻结时刻往后推，
+ * 读数跟着往回跳；而暂停生效后的重复暂停反而是幂等的——同一个动作两套结果。
+ *
+ * 恢复途中再按暂停必须有新的冻结时刻：Resume 同样要等片边界，此间引擎仍是 PAUSED。
+ * 若沿用「已发过暂停」位，第二段暂停会被并进第一段，读数接着上一段的冻结值算。
+ * 所以 [onResumeRequest] 只复位该位、不动 [frozenAtNs]：引擎确认离开 PAUSED 之前
+ * 读数仍冻结在上一段（[readoutReferenceNs] 只认引擎状态 + 冻结值）。
+ *
+ * 引擎确认 RUNNING / IDLE（以及起播、停止）后清理，但**不能**无条件清：
+ * pause() 提交后立刻会调一次 notifyState，那时引擎仍是 RUNNING——若在该窗口里 reset，
+ * 刚记下的冻结时刻与请求位当场被抹掉，重复暂停又能改时刻，读数也不再冻结。
+ * 所以 RUNNING 走 [onRunningConfirmed]：还有待生效的暂停请求就保留；只有恢复已确认
+ * （请求位已由 [onResumeRequest] 放开）才清。IDLE 与起播、停止才用 [reset] 全清。
+ *
+ * 纯 Kotlin，时间由调用方传入，JVM 单测直接跑。
+ */
+internal class PauseFreezeClock {
+
+    /** 冻结时刻（`nanoTime` 基准）；0 表示当前没有冻结读数。 */
+    var frozenAtNs: Long = 0L
+        private set
+
+    /** 已发出暂停请求、引擎尚未确认离开 PAUSED。 */
+    private var pauseRequested = false
+
+    /** 暂停请求：只有第一次有效，重复请求（含片边界前的 pending 态）不挪动冻结时刻。 */
+    fun onPauseRequest(nowNs: Long) {
+        if (pauseRequested) return
+        frozenAtNs = nowNs
+        pauseRequested = true
+    }
+
+    /** 恢复请求：下一次暂停属于新的一次冻结，允许重取冻结时刻。 */
+    fun onResumeRequest() {
+        pauseRequested = false
+    }
+
+    /**
+     * 引擎确认 RUNNING。
+     *
+     * 还有待生效的暂停请求时**不清**：这正是「Pause 已提交、片边界未到」的窗口
+     * （pause() 后紧跟的 notifyState 就会走到这里）；清掉等于把刚锁定的冻结时刻作废。
+     * 没有待暂停请求时（恢复已被确认）冻结段结束，读数回到墙钟。
+     */
+    fun onRunningConfirmed() {
+        if (pauseRequested) return
+        frozenAtNs = 0L
+    }
+
+    /** 起播、停止、引擎确认 IDLE：冻结读数与请求位一起作废。 */
+    fun reset() {
+        frozenAtNs = 0L
+        pauseRequested = false
+    }
+}
+
+/**
+ * 外部应用守卫：把「前台窗口包名」翻译成「该不该停」。
+ *
+ * 脚本坐标是录制那一屏的绝对位置，换一个 App 后同一坐标会落到别的控件上。
+ * 因此播放（含暂停）期间只允许停留在**目标外部应用**：目标在起播时锁定，
+ * 之后出现别的包名立即报告「该停」。
+ *
+ * 状态机（纯 Kotlin，不触 Android API，单测直接调）：
+ * - [begin]：起播时锁定目标。只认**此刻仍在前台**的外部包名；前台是本包（或还没收到
+ *   过事件）时留空，由第一个外部包名锁定——从本包切到目标 App 因此不会误停，
+ *   也不会拿上一次会话的旧包名把这一次误停掉。
+ * - [onWindow]：记前台包名并判定。本包与 [ignoredPackages] 一律忽略；`active` 为假
+ *   （空闲）时只记录不判定。
+ * - [end]：本次播放结束，目标作废。
+ *
+ * 为什么不看 `isFullScreen` 之类：只按包名判定最可预期——切换 App、回桌面、
+ * 系统弹层打断都会停，宁可多停一次，也不要在别人的界面上继续点。
+ *
+ * @param ignoredPackages 与 [selfPackage] 同样「不算切换」的包名。目前只放默认输入法：
+ *   键盘窗口叠在目标应用上方，无障碍事件报的是输入法自己的包名，而坐标仍在同一个界面里。
+ */
+internal class ExternalAppGuard(
+    private val selfPackage: String,
+    private val ignoredPackages: Set<String> = emptySet(),
+) {
+
+    /** 最近一次看到的窗口包名（含本包，不含忽略包）；null 表示还没收到过事件。 */
+    var foreground: String? = null
+        private set
+
+    /** 本次播放锁定的目标外部包名；null 表示还没锁定（等待第一次外部事件）。 */
+    var target: String? = null
+        private set
+
+    /** 起播：按此刻的前台包名锁定目标，前台是本包/未知则留空待定。 */
+    fun begin() {
+        target = foreground?.takeIf { it.isNotEmpty() && it != selfPackage }
+    }
+
+    /** 播放结束（停止 / 跑完 / 出错）：目标作废。 */
+    fun end() {
+        target = null
+    }
+
+    /**
+     * 收到一次窗口变化。
+     *
+     * 忽略包（默认输入法）直接返回：既不判切换，也不记前台——记了会让 [begin]
+     * 把输入法锁成本次目标，之后真正的应用反倒成了「别的包名」。
+     *
+     * @param packageName 事件的包名，空值忽略
+     * @param active 是否处于播放或暂停（空闲时只记录前台，不判定）
+     * @return true 表示播放应立刻停止
+     */
+    fun onWindow(packageName: CharSequence?, active: Boolean): Boolean {
+        val name = packageName?.toString()?.takeIf { it.isNotEmpty() } ?: return false
+        if (name in ignoredPackages) return false
+        foreground = name
+        if (!active || name == selfPackage) return false
+        val locked = target
+        if (locked == null) {
+            target = name
+            return false
+        }
+        return name != locked
+    }
+}
+
+/**
+ * 从输入法标识里取包名：系统设置里的值是 `<包名>/<服务类名>`。
+ *
+ * 纯函数便于单测。拿不到（null / 空串 / 只有斜杠）返回 null，调用方据此不做过滤，
+ * 宁可退回旧行为，也不要因为读不到而误把目标应用当成切换。
+ */
+internal fun imePackageOf(inputMethodId: String?): String? =
+    inputMethodId?.substringBefore('/')?.trim()?.takeIf { it.isNotEmpty() }

@@ -42,7 +42,7 @@ object PermissionStatus {
      * 3. 无障碍总开关开着，且 [`Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES`]
      *    里写着本服务。
      *
-     * 为什么不能只看第 2 条：MuMu/API 32 实测出现过「服务已启用、已绑定、注入确实生效，
+     * 为什么不能只看第 2 条：模拟器/API 32 实测出现过「服务已启用、已绑定、注入确实生效，
      * 但 [AccessibilityManager.getEnabledAccessibilityServiceList] 不返回它」的状态
      * （服务崩过几次后系统会把它从列表里摘掉，重装/重启才恢复）。此时横幅会一直写着
      * 「无障碍服务未开启，无法执行点击」，把用户引到设置页去改一个本来就对的开关。

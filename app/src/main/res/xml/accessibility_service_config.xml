@@ -2,10 +2,12 @@
 <!--
   无障碍服务配置。
 
-  事件订阅收敛到最小：只留 typeWindowStateChanged（系统建连所需的最小集），
-  不订 typeWindowContentChanged / typeAllMask。本服务不读屏、不监听窗口内容，
-  因此除建连外几乎不会收到事件回调，省去无谓开销。
-  若后续需要控件点击，再打开 typeWindowContentChanged 并实现 onAccessibilityEvent。
+  事件订阅收敛到最小：只留 typeWindowStateChanged（也是系统建连所需的最小集），
+  不订 typeWindowContentChanged / typeAllMask。本服务不读屏、不取控件内容
+  （canRetrieveWindowContent=false），只从这个事件的包名记录前台应用：
+  播放/暂停期间切到别的应用即停止回放，避免脚本按旧坐标点到别的 App 上
+  （判定见 PlaybackController.onForegroundWindow）。
+  若后续需要控件点击，再打开 typeWindowContentChanged 并在 onAccessibilityEvent 里分派。
 -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowStateChanged"

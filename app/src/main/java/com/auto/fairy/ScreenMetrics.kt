@@ -54,17 +54,24 @@ object ScreenMetrics {
      */
     fun mismatch(context: Context, script: ScreenInfo): String? {
         val now = screenInfo(context)
-        return mismatchOf(
-            script.w,
-            script.h,
-            now.w,
-            now.h,
-            script.rot,
-            now.rot,
-            script.dpi,
-            now.dpi,
-        )
+        return mismatch(script, now)
     }
+
+    /**
+     * 比较两份屏幕快照。
+     *
+     * 起播校验与播放中止必须共用这一入口，否则旋转、比例或 dpi 的判据会分叉。
+     */
+    fun mismatch(script: ScreenInfo, now: ScreenInfo): String? = mismatchOf(
+        script.w,
+        script.h,
+        now.w,
+        now.h,
+        script.rot,
+        now.rot,
+        script.dpi,
+        now.dpi,
+    )
 
     /**
      * [mismatch] 的纯逻辑部分：只比对两组尺寸、旋转与 dpi，便于单测。
@@ -112,6 +119,61 @@ object ScreenMetrics {
             }
         }
         return null
+    }
+
+    /**
+     * 播放中的严格快照比对：任一可见参数变了就返回可读说明，null 表示没变。
+     *
+     * 起播门用 [mismatch] 的 8% 容差吸收状态栏/导航栏/密度的正常抖动；播放中不能沿用
+     * 这份容差——坐标已经按起播那块屏算好了，屏幕再动一点（下拉后高度变、分屏、改显示
+     * 大小）都会让后续笔画落到别处，而 8% 以内的变化恰好被放过。这里只问「和起播时是不是
+     * 同一块屏」，不比比例、不带容差。
+     *
+     * 判据覆盖尺寸、旋转、密度三项：旋转 180° 尺寸不变，密度变化尺寸也不变，任一漏掉
+     * 都会整段按错误坐标注入。值未知（旧脚本/取值失败）时该项不判，与 [mismatchOf] 同口径，
+     * 不把「不知道」当成「变了」。
+     */
+    fun strictChange(before: ScreenInfo, now: ScreenInfo): String? = strictChangeOf(
+        before.w,
+        before.h,
+        now.w,
+        now.h,
+        before.rot,
+        now.rot,
+        before.dpi,
+        now.dpi,
+    )
+
+    /**
+     * [strictChange] 的纯逻辑部分，便于单测。
+     *
+     * 返回的说明逐项列出真正变了的参数（尺寸 / 旋转 / 密度），而不是笼统一句
+     * 「屏幕变了」：播放中止时用户要能一眼看出是转屏、分屏还是改了显示大小。
+     */
+    fun strictChangeOf(
+        beforeW: Int,
+        beforeH: Int,
+        nowW: Int,
+        nowH: Int,
+        beforeRot: Int = ScreenInfo.ROT_UNKNOWN,
+        nowRot: Int = ScreenInfo.ROT_UNKNOWN,
+        beforeDpi: Int = 0,
+        nowDpi: Int = 0,
+    ): String? {
+        if (beforeW <= 0 || beforeH <= 0 || nowW <= 0 || nowH <= 0) return null
+        val changes = ArrayList<String>(2)
+        if (beforeW != nowW || beforeH != nowH) {
+            changes += "尺寸 $beforeW×$beforeH → $nowW×$nowH"
+        }
+        if (rotationDiffers(beforeRot, nowRot)) {
+            changes += "旋转 ${beforeRot * 90}° → ${nowRot * 90}°"
+        }
+        // 密度未知（旧记录/取值失败）不判，同上：不能把「不知道」当成「变了」。
+        if (beforeDpi > 0 && nowDpi > 0 && beforeDpi != nowDpi) {
+            changes += "显示密度 $beforeDpi → $nowDpi"
+        }
+        if (changes.isEmpty()) return null
+        return changes.joinToString("，")
     }
 
     /** 旋转是否不同：任一侧未知（-1）就不判，旧脚本因此不会被拦。 */

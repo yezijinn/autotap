@@ -148,6 +148,86 @@ class ScreenMismatchTest {
         assertNull(check(1440, 3200, 1440, 3040, sdpi = 560, ndpi = 560))
     }
 
+    /** 起播校验与它的纯逻辑入口同一判据；播放中止另有严格判据，见下文。 */
+    @Test
+    fun startupCheckMatchesPureLogic() {
+        val script = ScreenInfo(1440, 3200, 560, 0)
+        val now = ScreenInfo(1440, 3200, 560, 2)
+        assertNotNull(ScreenMetrics.mismatch(script, now))
+        assertEquals(
+            ScreenMetrics.mismatchOf(1440, 3200, 1440, 3200, 0, 2, 560, 560),
+            ScreenMetrics.mismatch(script, now),
+        )
+    }
+
+    // ── 播放中的严格快照判定 ────────────────────────────────
+    // 起播门吃 8% 容差；播放中坐标已按起播那块屏算好，任何真实变化都必须中止。
+
+    /** 高度少 160px（5.2%，落在起播容差内）：起播放行，播放中必须中止。 */
+    @Test
+    fun playbackRejectsChangeInsideStartupTolerance() {
+        assertNull(check(1440, 3200, 1440, 3040))
+        assertNotNull(strict(1440, 3200, 1440, 3040))
+    }
+
+    /** 密度 560→520（dp 差 7.7%，起播容差内）：播放中控件会重排，必须中止。 */
+    @Test
+    fun playbackRejectsDensityChangeInsideStartupTolerance() {
+        assertNull(check(1440, 3200, 1440, 3200, sdpi = 560, ndpi = 520))
+        assertNotNull(strict(1440, 3200, 1440, 3200, beforeDpi = 560, nowDpi = 520))
+    }
+
+    /** 尺寸没变、只转了 180°：严格判据必须看出来。 */
+    @Test
+    fun playbackRejectsRotationChange() {
+        assertNotNull(strict(1440, 3200, 1440, 3200, beforeRot = 0, nowRot = 2))
+        assertNotNull(strict(1440, 3200, 1440, 3200, beforeRot = 1, nowRot = 3))
+    }
+
+    /** 同一块屏：严格判据不误报。 */
+    @Test
+    fun playbackSameSnapshotIsFine() {
+        assertNull(strict(1440, 3200, 1440, 3200, beforeRot = 1, nowRot = 1, beforeDpi = 560, nowDpi = 560))
+    }
+
+    /** 值未知时不判（与起播门同口径）：不能把「不知道」当成「变了」。 */
+    @Test
+    fun playbackUnknownValuesNotBlocked() {
+        assertNull(strict(1440, 3200, 1440, 3200))
+        assertNull(strict(1440, 3200, 1440, 3200, beforeDpi = 0, nowDpi = 560))
+        assertNull(strict(1440, 3200, 1440, 3200, beforeRot = -1, nowRot = 2))
+    }
+
+    /** 说明要逐项写出变了的参数，用户才知道是转屏、分屏还是改了显示大小。 */
+    @Test
+    fun playbackMessageNamesWhatChanged() {
+        val size = strict(1440, 3200, 1440, 3040)!!
+        assertTrue(size.contains("尺寸"))
+        assertTrue(size.contains("1440×3200"))
+        assertTrue(size.contains("1440×3040"))
+
+        val rot = strict(1440, 3200, 1440, 3200, beforeRot = 0, nowRot = 2)!!
+        assertTrue(rot.contains("旋转"))
+        assertTrue(rot.contains("0°"))
+        assertTrue(rot.contains("180°"))
+
+        val dpi = strict(1440, 3200, 1440, 3200, beforeDpi = 560, nowDpi = 520)!!
+        assertTrue(dpi.contains("显示密度"))
+        assertTrue(dpi.contains("560"))
+        assertTrue(dpi.contains("520"))
+    }
+
+    /** 快照入口与纯逻辑入口同一判据。 */
+    @Test
+    fun playbackSnapshotEntryMatchesPureLogic() {
+        val before = ScreenInfo(1440, 3200, 560, 0)
+        val now = ScreenInfo(1440, 3040, 560, 0)
+        assertEquals(
+            ScreenMetrics.strictChangeOf(1440, 3200, 1440, 3040, 0, 0, 560, 560),
+            ScreenMetrics.strictChange(before, now),
+        )
+    }
+
     private fun check(
         sw: Int,
         sh: Int,
@@ -166,5 +246,25 @@ class ScreenMismatchTest {
         nowRot = nowRot,
         scriptDpi = sdpi,
         nowDpi = ndpi,
+    )
+
+    private fun strict(
+        bw: Int,
+        bh: Int,
+        nw: Int,
+        nh: Int,
+        beforeRot: Int = ScreenInfo.ROT_UNKNOWN,
+        nowRot: Int = ScreenInfo.ROT_UNKNOWN,
+        beforeDpi: Int = 0,
+        nowDpi: Int = 0,
+    ): String? = ScreenMetrics.strictChangeOf(
+        beforeW = bw,
+        beforeH = bh,
+        nowW = nw,
+        nowH = nh,
+        beforeRot = beforeRot,
+        nowRot = nowRot,
+        beforeDpi = beforeDpi,
+        nowDpi = nowDpi,
     )
 }

@@ -8,7 +8,7 @@ import org.junit.Test
  * 无障碍开关的第三判据：[enabledServiceListed]。
  *
  * 钉住的是「系统启用列表漏报本服务，但设置里确实写着它」这一真机故障
- * （MuMu/API 32：服务崩过几次后列表会摘掉它，开关却还是开的）。横幅据此
+ * （模拟器/API 32：服务崩过几次后列表会摘掉它，开关却还是开的）。横幅据此
  * 不再谎报「无障碍服务未开启」。
  */
 class EnabledServiceListedTest {

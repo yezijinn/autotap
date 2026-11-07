@@ -30,7 +30,7 @@ import kotlin.coroutines.suspendCoroutine
  *   因此这里全程串行，绝不并发 dispatch。**反向也成立**：派发新一笔会作废用户正在进行的
  *   真触摸（按下后 34~149ms 收到 CANCEL，等不到 UP，实测同一坐标 `input tap` 却次次生效），
  *   所以迷你条的即时按钮挂在 ACTION_DOWN 上，见 `OverlayController.onPress`；
- * - **两次独立按压的起点间隔强制 ≥ 50ms**：MuMu（Android 12 / API 32）实测
+ * - **两次独立按压的起点间隔强制 ≥ 50ms**：模拟器（Android 12 / API 32）实测
  *   20ms 间隔会丢掉 1/3 的点击、50ms 间隔 5/5 轮精确命中。间隔不足时把后续动作
  *   整体后移（保持相对顺序），而不是照搬脚本时间轴。片内由 [GestureBatching] 后移，
  *   片间由 [dispatchBatch] 的「上一笔起点 + 上一笔时长」兜住；
@@ -47,7 +47,7 @@ import kotlin.coroutines.suspendCoroutine
  * ## 命令响应（D1/D2 修复）
  * 一个切片就是一个命令消费点，片长直接决定暂停/停止的生效延迟。这里通过
  * [Caps.maxSliceMs] 把片跨度压到 [ACCESSIBILITY_SLICE_SPAN_MS]（400ms），并在两条路径上兜底：
- * - 看门狗：`dispatchGesture` 的回调可能丢（丢没丢应用侧看不出来；第十七轮各落点的真实
+ * - 看门狗：`dispatchGesture` 的回调可能丢（丢没丢应用侧看不出来；实测各落点的真实
  *   触摸都收到了回调），丢了就永远等不到 resume，引擎线程会永久 park。片尾 + 宽限
  *   仍未回调就按失败返回，让引擎走错误分支而不是假死。
  * - 提前结束：[requestAbort] 由控制器在暂停/停止时调用，给正常回调一个宽限期后
@@ -57,18 +57,18 @@ import kotlin.coroutines.suspendCoroutine
  *   （见 [cancelInFlightGesture]）：派发一笔落在屏幕外的 1ms 手势，系统按「新派发取消旧手势」处理，
  *   目标只收到 CANCEL、收不到任何 DOWN/UP，否则 12s 的滑动在按下停止后还会继续滑满。
  *   暂停不碰在途手势（冻结时间轴，这一笔仍要完整走完）。
- *   真实触摸无论落在哪个窗口（含自家迷你条，第十七轮两次实测）目标都会收到 CANCEL；
+ *   真实触摸无论落在哪个窗口（含自家迷你条，两次实测）目标都会收到 CANCEL；
  *   `adb shell input` 注入的点击只有落在目标窗口内才截断那一笔，落在自家浮层时目标停在
  *   按下态、收不到 CANCEL（不会残留到下一次播放：实测重放的首个 DOWN 起落与时长精确）。
  *
- * ## 手势被系统取消 ≠ 回放失败（第十七轮实测）
+ * ## 手势被系统取消 ≠ 回放失败（实测）
  * 系统的 `MotionEventInjector` 一收到**真实**输入事件（触摸屏、鼠标按钮；`adb shell input`
  * 走的是注入通道，不进这条链）就作废在途手势：删掉还没发的 MotionEvent、给目标补一个
  * ACTION_CANCEL，并以 `onPerformGestureResult(sequence, false)` 回调服务。所以
  * 「播放中碰一下屏幕」必然让某一笔收到 onCancelled——把它当整轮失败时，用户看到的是
  * 播到一半自己停住 + Toast「手势被系统取消」。
  *
- * 实测（MuMu/API32，3s 长按脚本）：内核级触摸一下 → 0.28s 后回放线程消失；
+ * 实测（模拟器/API32，3s 长按脚本）：内核级触摸一下 → 0.28s 后回放线程消失；
  * 同一脚本用 `adb shell input tap` 打点 → 目标侧收到 CANCEL、那一笔被截断，回放照常。
  * 现在的处理是「这一笔丢了就丢了，接着派下一笔」：时间轴是绝对的，后续笔画本来就不受
  * 影响；目标已收到 ACTION_CANCEL，不会留下按下态。
@@ -148,7 +148,8 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
     * 「删除」并弹出删除确认，用户完全没有察觉。宁可中止并报出两端尺寸。
     *
     * 旋转必须一起比：180° 反转时长宽完全不变，只比尺寸会整段漏判，之后每一笔
-    * 都按镜像坐标注入。起播判定早已按同一条规则比旋转（[ScreenMetrics.mismatch]）。
+    * 都按镜像坐标注入。播放中用严格快照判据（[ScreenMetrics.strictChange]）：
+    * 尺寸/旋转/密度任一不同即中止，不吃起播门那份 8% 容差。
     */
     @Volatile
     private var screenAtStart: ScreenInfo? = null
@@ -247,10 +248,17 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
      * 才中止（最长 = 剩余等待时长）。这段时间没有注入，不会点错，只是「已经不能播了」
      * 而屏幕仍显示播放中。要提前，就得让 core 认识屏幕或复制一份判据，不值得。
      *
-     * dp 也要一起比：`wm density` 变（设置里的「显示大小」）时 getRealSize 与旋转都不变，
-     * 但 dp 视口变了、控件整体重排，归一化坐标同样会点错——起播门的
-     * [ScreenMetrics.mismatch] 一直比 dp，播放中这道门漏了它。
+     * 与起播门**不是同一份判据**：起播用 [ScreenMetrics.mismatch] 的 8% 容差吸收状态栏、
+     * 导航栏、密度的正常抖动；播放中一旦放行真实变化，后续每一笔都按旧坐标注入。所以这里
+     * 用 [ScreenMetrics.strictChange]——尺寸、旋转、密度任一不同即中止（dp 视口变了控件
+     * 整体重排，转 180° 尺寸却一模一样，两者都必须覆盖）。
      */
+    private fun screenAbort(now: ScreenInfo): Result<Unit>? {
+        val start = screenAtStart ?: return null
+        val change = ScreenMetrics.strictChange(start, now) ?: return null
+        return Result.failure(IllegalStateException("屏幕已变：$change，回放中止"))
+    }
+
     /**
      * 作废在途注入手势。
      *
@@ -274,21 +282,6 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
         } catch (t: Throwable) {
             Log.w(TAG, "取消在途手势失败", t)
         }
-    }
-
-    private fun screenAbort(now: ScreenInfo): Result<Unit>? {
-        val start = screenAtStart ?: return null
-        if (now.w == start.w && now.h == start.h &&
-            now.rot == start.rot && now.dpi == start.dpi
-        ) {
-            return null
-        }
-        return Result.failure(
-            IllegalStateException(
-                "屏幕已变为 ${now.w}×${now.h}@${now.rot * 90}°@${now.dpi}dpi" +
-                    "（原 ${start.w}×${start.h}@${start.rot * 90}°@${start.dpi}dpi），回放中止",
-            ),
-        )
     }
 
     /**
@@ -512,7 +505,7 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
         /**
         * 两次独立按压的**起点**间隔下限（不是「上批结束后再加」）。
         *
-        * MuMu/API32 实测：20ms 间隔会丢点击，50ms 稳定；这是 A11y 通道的物理下限。
+        * 模拟器/API32 实测：20ms 间隔会丢点击，50ms 稳定；这是 A11y 通道的物理下限。
         * 与上一笔按压时长取较大者：同一次按压不可能在上一笔还没抬起时开始。
         * 计划间隔本来就够大时它不产生任何影响（见 [GestureBatching] / [dispatchBatch]）。
         */
@@ -521,7 +514,7 @@ class A11yBackend(private val service: AccessibilityService) : InputBackend, Sli
         /**
         * 手势回调看门狗的宽限。
         *
-        * 回调丢失是真实故障（在 MuMu 上播放期间点到本应用浮层即可复现），一旦丢失
+        * 回调丢失是真实故障（在模拟器上播放期间点到本应用浮层即可复现），一旦丢失
         * 续体永不 resume，引擎线程永久 park。宽限取 1.5s：足够覆盖系统派发抖动，
         * 又能在用户察觉「卡住」之前把错误抛回引擎。
         *

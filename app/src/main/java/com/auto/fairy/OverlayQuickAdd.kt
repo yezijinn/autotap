@@ -65,7 +65,7 @@ object OverlayQuickAdd {
 
         view.quickAddCard.setOnClickListener { }
         // 回放中注入的点击到不了这里：根容器 [InjectShieldLayout] 在 injecting 期间丢弃整串事件
-        // （第二十六轮实测：播放中打开本层、脚本点在该层「点击」按钮中心，步数当场 +1）。
+        // （实测：播放中打开本层、脚本点在该层「点击」按钮中心，步数当场 +1）。
         // 取消与返回键照旧。
         view.quickAddScrim.setOnClickListener {
             if (!PlaybackController.injecting) close()
@@ -166,7 +166,7 @@ object OverlayQuickAdd {
     private fun currentScript(repo: ScriptRepository): Script? {
         // 与播放目标同一口径，但**不做列表首项回落**：追加是写盘动作，目标必须是用户
         // 明确选过的那条（播放/暂停中 → 上次激活）。目标失效时宁可不追加并让用户去列表重选，
-        // 也不能静默写进另一条脚本——第二十六轮实测踩到：测试脚本删掉后回落到了用户脚本，
+        // 也不能静默写进另一条脚本——实测踩到：测试脚本删掉后回落到了用户脚本，
         // 一次「点击」就把 391 字节的脚本写成 716 字节。
         val id = PlaybackController.playTargetId ?: return null
         return repo.load(id)

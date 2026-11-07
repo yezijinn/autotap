@@ -149,7 +149,7 @@ object OverlayController {
 
         // detach 只覆盖「窗口真的被移出窗口树」（本类 hide、系统回收窗口）。
         // 撤悬浮窗权限**不走这里**：系统只把浮层 setHidden，窗口仍留在 WMS 里
-        // （第十七轮实测 added 仍为 true、三个窗口仍列出但一个都不画在屏上），
+        // （实测 added 仍为 true、三个窗口仍列出但一个都不画在屏上），
         // 那条路径由 PlaybackController.watchOverlayPermission 的 AppOps 监听收尾。
         view.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) = Unit
@@ -169,7 +169,7 @@ object OverlayController {
         // 等 UP 的点击在 160ms 一拍的脚本上 8/8 全失效。代价是「按下再滑走取消」不再成立：
         // 停止、暂停是幂等动作，关闭后点「激活」即可回来，都无需撤销窗口。
         //
-        // 加号也按下即开（第二十六轮实测：真触摸按加号 0/6 打开，注入通道 3/3 打开）。
+        // 加号也按下即开（实测：真触摸按加号 0/6 打开，注入通道 3/3 打开）。
         // 误触代价实测只有「暂停 + 弹层」，追加步骤要点第二下才发生，两下就能退回；
         // 而同一排的停止键代价更大却早就是按下即生效——留一个「按了没反应」的键才是缺陷。
         // 起播挂抬手，其余键挂按下，见 [onPress] 与 [onRelease]
