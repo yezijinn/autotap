@@ -21,7 +21,7 @@ python build_apk.py
 python build_apk.py --install
 ```
 
-签名密钥不随仓库分发，路径与口令由本机环境提供（`JINN_KEYSTORE_ROOT` 等变量）。缺少密钥时脚本会明确报错，不使用任何仓库内密钥。
+签名密钥不随仓库分发。构建脚本固定使用构建环境中的正式密钥库，缺少密钥时明确报错。
 
 ## 许可
 

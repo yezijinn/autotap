@@ -9,10 +9,7 @@ r"""
     python build_apk.py --install --device <序列号>   # 多设备时明确指定目标
     python build_apk.py --clean              # clean 后全新编译
 
-签名：密钥库根目录按以下顺序找（找到即用）：
-    1) 环境变量 JINN_KEYSTORE_ROOT（**设了就只用它**，打错路径会明确报错）
-    2) 用户目录下的 JinnKeyStores
-  根目录下按包名取密钥：<根目录>/<applicationId>/release.jks，密码读同级 JinnPassword.md。
+签名：固定使用构建环境中的正式密钥库，密码读取同级 JinnPassword.md。
   任何密钥与口令都不写入仓库文件。
 
 体积门禁：APK 超过 2.5MB 直接失败退出（设计硬指标，见 docs/设计方案.md 第 5 节）。
@@ -33,34 +30,24 @@ if hasattr(sys.stdout, "reconfigure"):
 
 ROOT = Path(__file__).resolve().parent
 APPLICATION_ID = "com.blackberry.keyboard"
+REQUIRED_KEYSTORE = Path(
+    r"C:\AI_WORKSPACE\GLOBAL\credentials\JinnKeyStores\com.blackberry.keyboard\release.jks"
+)
 MAX_APK_BYTES = int(2.5 * 1024 * 1024)
 
 
-def keystore_root_candidates():
-    env = (os.environ.get("JINN_KEYSTORE_ROOT") or "").strip()
-    if env:
-        return [Path(env)]
-    return [Path.home() / "JinnKeyStores"]
-
-
-def resolve_keystore_root():
-    tried = keystore_root_candidates()
-    for root in tried:
-        if (root / APPLICATION_ID / "release.jks").is_file():
-            return root
+def resolve_keystore():
+    if REQUIRED_KEYSTORE.is_file():
+        return REQUIRED_KEYSTORE
     raise RuntimeError(
-        "未找到签名密钥（已试过下列位置）：\n"
-        + "\n".join(f"  - {root / APPLICATION_ID / 'release.jks'}" for root in tried)
-        + "\n  请设置 JINN_KEYSTORE_ROOT 指向密钥库根目录后重试，例如：\n"
-        r"  set JINN_KEYSTORE_ROOT=<密钥库根目录>"
+        f"未找到指定签名密钥：{REQUIRED_KEYSTORE}"
     )
 
 
 def load_signing_env():
     """读出本包密钥与口令，仅注入当前进程环境，不落盘、不打印。"""
-    root = resolve_keystore_root()
-    keystore = root / APPLICATION_ID / "release.jks"
-    password_file = root / "JinnPassword.md"
+    keystore = resolve_keystore()
+    password_file = keystore.parent.parent / "JinnPassword.md"
     if not password_file.is_file():
         raise RuntimeError(f"未找到签名密码文件: {password_file}")
 
